@@ -2,63 +2,71 @@ import cv2
 import numpy as np
 
 
-img = cv2.imread("board2.png")
-
+PUCK_SORT = lambda y: sorted(y, key=cv2.contourArea, reverse=True)[:4]
+CHERRY_SORT = lambda y: filter(lambda x: cv2.contourArea(x) < 500, y)
 HSVCOLORS = (
-    # ((H, S, V), (B, G, R))
-    ((15, 53, 24), (0, 100, 255)),  # brown
-    ((333, 60, 60), (230, 0, 255)),  # pink
-    ((40, 80, 80), (0, 255, 255)),  # yellow
+    (
+        (15, 53, 24),
+        (0, 100, 255),
+        45,
+        (20, 20),
+        PUCK_SORT,
+    ),  # brown
+    (
+        (333, 60, 60),
+        (230, 0, 255),
+        45,
+        (20, 20),
+        PUCK_SORT,
+    ),  # pink
+    (
+        (40, 80, 80),
+        (0, 255, 255),
+        45,
+        (20, 20),
+        PUCK_SORT,
+    ),  # yellow
+    (
+        (6, 76, 71),
+        (0, 0, 255),
+        25,
+        (3, 3),
+        CHERRY_SORT,
+    ),  # red
 )
 
 
-def drawSliceMask(hsvVal, bgr, hsv, frame):
-    prec = 45
+def getObjectCoods(hsv, frame, hsvColor):
+    hsvVal, bgr, prec, kernelSize, sortFunc = hsvColor
+    coods = []
     hsvVal = [int(hsvVal[0] / 2)] + [int(v / 100 * 255) for v in hsvVal[1:]]
     low = np.array([v - prec if v > prec else 0 for v in hsvVal])
     upp = np.array([v + prec if v < 255 - prec else 255 for v in hsvVal])
     mask = cv2.inRange(hsv, low, upp)
-    kernel = np.ones((20, 20), np.uint8)
+    kernel = np.ones(kernelSize, np.uint8)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-    for i in sorted(contours, key=cv2.contourArea, reverse=True)[:4]:
+    for i in sortFunc(contours):
         M = cv2.moments(i)
         if M["m00"] != 0:
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
+            coods.append((cx, cy))
             cv2.drawContours(frame, [i], -1, bgr, 4)
-            cv2.circle(frame, (cx, cy), 4, bgr, -1)
+    return coods
 
 
-def drawCherries(hsv, frame):
-    hsvVal, bgr = (6, 76, 71), (0, 0, 255)
-    prec = 25
-    hsvVal = [int(hsvVal[0] / 2)] + [int(v / 100 * 255) for v in hsvVal[1:]]
-    low = np.array([v - prec if v > prec else 0 for v in hsvVal])
-    upp = np.array([v + prec if v < 255 - prec else 255 for v in hsvVal])
-    mask = cv2.inRange(hsv, low, upp)
-    kernel = np.ones((3, 3), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-    for i in filter(lambda x: cv2.contourArea(x) < 1000, contours):
-        M = cv2.moments(i)
-        if M["m00"] != 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-            cv2.drawContours(frame, [i], -1, bgr, 4)
-            cv2.circle(frame, (cx, cy), 3, bgr, -1)
-
-
-def draw(frame):
+def draw(frame, gray=False):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    gray = frame
-    # gray = cv2.cvtColor(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+    if gray:
+        frame = cv2.cvtColor(
+            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR
+        )
     for color in HSVCOLORS:
-        drawSliceMask(color[0], color[1], hsv, gray)
-    drawCherries(hsv, gray)
-    return gray
+        for p in getObjectCoods(hsv, frame, color):
+            cv2.circle(frame, p, 10, color[1], -1)
+    return frame
 
 
 def warp(frame):
@@ -78,8 +86,10 @@ def warp(frame):
     # warp based on grid
     bWidth, bHeight = 2000, 3000
     width, height = int(bWidth * 1.2), int(bHeight * 1.2)
+    # width, height = bWidth, bHeight
     bw_seg, bh_seg = bWidth / 7, bHeight / 5
     w_seg, h_seg = width / 12, height / 12
+    # w_seg, h_seg = 0, 0
     pts1 = np.float32(grid)
     pts2 = np.float32(
         [
@@ -93,8 +103,9 @@ def warp(frame):
     return cv2.warpPerspective(frame, matrix, (width, height))
 
 
-# img = warp(img)
-
-cv2.imshow("IMG", draw(img))
+img = cv2.imread("board2.png")
+img = draw(img, True)
+img = warp(img)
+cv2.imshow("IMG", img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
