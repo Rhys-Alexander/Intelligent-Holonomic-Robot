@@ -85,10 +85,10 @@ def warp(frame):
             grid[markerID % 20] = (cX, cY)
     # warp based on grid
     bWidth, bHeight = 2000, 3000
-    width, height = int(bWidth * 1.2), int(bHeight * 1.2)
-    # width, height = bWidth, bHeight
     bw_seg, bh_seg = bWidth / 7, bHeight / 5
+    width, height = int(bWidth * 1.2), int(bHeight * 1.2)
     w_seg, h_seg = width / 12, height / 12
+    # width, height = bWidth, bHeight
     # w_seg, h_seg = 0, 0
     pts1 = np.float32(grid)
     pts2 = np.float32(
@@ -100,6 +100,7 @@ def warp(frame):
         ]
     )
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
     return cv2.warpPerspective(frame, matrix, (width, height))
 
 
@@ -109,3 +110,5 @@ img = warp(img)
 cv2.imshow("IMG", img)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+# TODO chop off not on board sections of image after tracking aruco
