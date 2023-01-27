@@ -1,9 +1,15 @@
 import cv2
 import numpy as np
 
+MAX_CHERRY_CONTOUR = 500
+MIN_PUCK_CONTOUR = 1200
 
-PUCK_SORT = lambda y: sorted(y, key=cv2.contourArea, reverse=True)[:4]
-CHERRY_SORT = lambda y: filter(lambda x: cv2.contourArea(x) < 500, y)
+PUCK_SORT = lambda y: sorted(
+    filter(lambda x: cv2.contourArea(x) > MIN_PUCK_CONTOUR, y),
+    key=cv2.contourArea,
+    reverse=True,
+)[:12]
+CHERRY_SORT = lambda y: filter(lambda x: cv2.contourArea(x) < MAX_CHERRY_CONTOUR, y)
 HSVCOLORS = (
     (
         (15, 53, 24),
