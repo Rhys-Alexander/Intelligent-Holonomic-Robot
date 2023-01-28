@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 MAX_CHERRY_CONTOUR = 500
-MIN_PUCK_CONTOUR = 1200
+MIN_PUCK_CONTOUR = 1500
 
 PUCK_SORT = lambda y: sorted(
     filter(lambda x: cv2.contourArea(x) > MIN_PUCK_CONTOUR, y),
@@ -10,6 +10,7 @@ PUCK_SORT = lambda y: sorted(
     reverse=True,
 )[:12]
 CHERRY_SORT = lambda y: filter(lambda x: cv2.contourArea(x) < MAX_CHERRY_CONTOUR, y)
+
 HSVCOLORS = (
     (
         (15, 53, 24),
@@ -40,6 +41,9 @@ HSVCOLORS = (
         CHERRY_SORT,
     ),  # red
 )
+
+# TODO calibrate camera
+# TODO pose estimation
 
 
 def getObjectCoods(hsv, frame, hsvColor):
