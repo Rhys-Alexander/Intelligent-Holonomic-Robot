@@ -117,8 +117,6 @@ def warp(frame):
 img = cv2.imread("board2.png")
 img = draw(img, True)
 img = warp(img)
-cv2.imshow("IMG", img)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+cv2.imwrite("warped.png", img)
 
 # TODO chop off not on board sections of image after tracking aruco
