@@ -1,6 +1,14 @@
 import cv2
 import numpy as np
 
+DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
+BWIDTH, BHEIGHT = 2000, 3000
+BW_SEG, BH_SEG = BWIDTH / 7, BHEIGHT / 5
+WIDTH, HEIGHT = int(BWIDTH * 1.2), int(BHEIGHT * 1.2)
+W_SEG, H_SEG = WIDTH / 12, HEIGHT / 12
+PARAMS = cv2.aruco.DetectorParameters()
+DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
+
 MAX_CHERRY_CONTOUR = 500
 MIN_PUCK_CONTOUR = 1500
 
@@ -76,13 +84,9 @@ def draw(frame, gray=False):
     return frame
 
 
-def warp(frame):
-    # get grid
+def getWarpMatrix(frame):
     grid = [0] * 4
-    dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
-    params = cv2.aruco.DetectorParameters()
-    detector = cv2.aruco.ArucoDetector(dictionary, params)
-    corners, ids, _ = detector.detectMarkers(frame)
+    corners, ids, _ = DETECTOR.detectMarkers(frame)
     if len(corners) > 0:
         ids = ids.flatten()
         for (markerCorner, markerID) in zip(corners, ids):
@@ -91,30 +95,23 @@ def warp(frame):
             cY = int((tl[1] + br[1]) / 2.0)
             if markerID in [20, 21, 22, 23]:
                 grid[markerID % 20] = (cX, cY)
-    # warp based on grid
-    bWidth, bHeight = 2000, 3000
-    bw_seg, bh_seg = bWidth / 7, bHeight / 5
-    width, height = int(bWidth * 1.2), int(bHeight * 1.2)
-    w_seg, h_seg = width / 12, height / 12
-    # width, height = bWidth, bHeight
-    # w_seg, h_seg = 0, 0
     pts1 = np.float32(grid)
     pts2 = np.float32(
         [
-            [w_seg + bw_seg * 2, h_seg + bh_seg],
-            [w_seg + bWidth - bw_seg * 2, h_seg + bh_seg],
-            [w_seg + bw_seg * 2, h_seg + bh_seg * 4],
-            [w_seg + bWidth - bw_seg * 2, h_seg + bh_seg * 4],
+            [W_SEG + BW_SEG * 2, H_SEG + BH_SEG],
+            [W_SEG + BWIDTH - BW_SEG * 2, H_SEG + BH_SEG],
+            [W_SEG + BW_SEG * 2, H_SEG + BH_SEG * 4],
+            [W_SEG + BWIDTH - BW_SEG * 2, H_SEG + BH_SEG * 4],
         ]
     )
-    matrix = cv2.getPerspectiveTransform(pts1, pts2)
-    # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
-    return cv2.warpPerspective(frame, matrix, (width, height))
+    return cv2.getPerspectiveTransform(pts1, pts2)
 
 
 img = cv2.imread("example.jpeg")
 # img = draw(img, True)
-img = warp(img)
+matrix = getWarpMatrix(img)
+img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
+# print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
 cv2.imwrite("warped.png", img)
 
 # TODO chop off not on board sections of image after tracking aruco
