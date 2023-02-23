@@ -42,9 +42,6 @@ HSVCOLORS = (
     ),  # red
 )
 
-# TODO calibrate camera
-# TODO pose estimation
-
 
 def getObjectCoods(hsv, frame, hsvColor):
     hsvVal, bgr, prec, kernelSize, sortFunc = hsvColor
@@ -92,7 +89,8 @@ def warp(frame):
             tl, _, br, _ = markerCorner.reshape((4, 2))
             cX = int((tl[0] + br[0]) / 2.0)
             cY = int((tl[1] + br[1]) / 2.0)
-            grid[markerID % 20] = (cX, cY)
+            if markerID in [20, 21, 22, 23]:
+                grid[markerID % 20] = (cX, cY)
     # warp based on grid
     bWidth, bHeight = 2000, 3000
     bw_seg, bh_seg = bWidth / 7, bHeight / 5
@@ -114,8 +112,8 @@ def warp(frame):
     return cv2.warpPerspective(frame, matrix, (width, height))
 
 
-img = cv2.imread("board2.png")
-img = draw(img, True)
+img = cv2.imread("example.jpeg")
+# img = draw(img, True)
 img = warp(img)
 cv2.imwrite("warped.png", img)
 
