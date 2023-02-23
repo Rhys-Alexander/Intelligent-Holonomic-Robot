@@ -3,10 +3,10 @@ import numpy as np
 
 points_3D = np.array(
     [
-        (-125, 125, 0),  # Nose tip
-        (125, 125, 0),  # Chin
-        (125, -125, 0),  # Left eye corner
-        (-125, -125, 0),  # Right eye corner
+        (-125, 125, 0),
+        (125, 125, 0),
+        (125, -125, 0),
+        (-125, -125, 0),
     ],
     dtype="double",
 )
