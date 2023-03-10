@@ -4,8 +4,10 @@ import numpy as np
 DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
 BWIDTH, BHEIGHT = 2000, 3000
 BW_SEG, BH_SEG = BWIDTH / 7, BHEIGHT / 5
-WIDTH, HEIGHT = int(BWIDTH * 1.2), int(BHEIGHT * 1.2)
-W_SEG, H_SEG = WIDTH / 12, HEIGHT / 12
+# WIDTH, HEIGHT = int(BWIDTH * 1.2), int(BHEIGHT * 1.2)
+WIDTH, HEIGHT = BWIDTH, BHEIGHT
+# W_SEG, H_SEG = WIDTH / 12, HEIGHT / 12
+W_SEG, H_SEG = 0, 0
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
 
@@ -107,11 +109,12 @@ def getWarpMatrix(frame):
     return cv2.getPerspectiveTransform(pts1, pts2)
 
 
-img = cv2.imread("example.jpeg")
-# img = draw(img, True)
+# img = cv2.imread("pics/"+"example.jpeg")
+img = cv2.imread("pics/" + "board2.png")
+img = draw(img, True)
 matrix = getWarpMatrix(img)
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
 # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
-cv2.imwrite("warped.png", img)
+cv2.imwrite("pics/" + "warped.png", img)
 
 # TODO chop off not on board sections of image after tracking aruco
