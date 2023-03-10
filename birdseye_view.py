@@ -1,4 +1,5 @@
 import cv2
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,6 +16,7 @@ GRAY = (173, 184, 153)
 # Integer Radiuses
 PUCK_RADIUS = 60
 PLATE_RADIUS = 225
+BOT_RADIUS = 200
 # 2 length tuple, x pos and y pos
 BLUE_START = (225, 225)
 GREEN_START = (1775, 225)
@@ -24,18 +26,20 @@ GREEN_PLATES = [(225, 1125), (1775, 1875), (225, 2775), (1275, 2775)]
 CHERRY_HOLDERS = [(985, 0), (985, 2700), (0, 1350), (1970, 1350)]
 
 # 3 length tuple, x pos, y pos, and rotation
-blue_bot = (225, 225, 270)
-green_bot = (1775, 225, 270)
+blue_bot = (225, 225, 90)
+green_bot = (1775, 225, 90)
 
 # lists of tuples, x pos, y pos
 pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
 yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
 brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
-pucks = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
+puck_list = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
 cherries = []
 
 # Blank board
 board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
+# Img board
+# board = cv2.imread("pics/orthogonal_board.png")
 
 
 def drawBox(pt, color, radius=PLATE_RADIUS):
@@ -60,7 +64,7 @@ def drawCherryBox(pt):
     )
 
 
-def drawPuck(pt, color):
+def drawPuck(board, pt, color):
     x, y = pt
     cv2.circle(
         board,
@@ -86,11 +90,38 @@ for plate in GREEN_PLATES:
 for holder in CHERRY_HOLDERS:
     drawCherryBox(holder)
 
-# To Refresh the board
-for pucks, colour in pucks:
-    for puck in pucks:
-        drawPuck(puck, colour)
+start_state = board.copy()
 
+# To Refresh the board
+def refresh(board):
+    board = start_state.copy()
+    for pucks, colour in puck_list:
+        for puck in pucks:
+            drawPuck(board, puck, colour)
+
+    for bot, colour in ((blue_bot, BLUE), (green_bot, GREEN)):
+        x, y, rot = bot
+        cv2.circle(
+            board,
+            center=(x, y),
+            radius=BOT_RADIUS,
+            color=colour,
+            thickness=20,
+        )
+        cv2.line(
+            board,
+            pt1=(x, y),
+            pt2=(
+                math.ceil(x + 150 * np.cos(np.radians(rot))),
+                math.ceil(y + 150 * np.sin(np.radians(rot))),
+            ),
+            color=colour,
+            thickness=40,
+        )
+    return board
+
+
+board = refresh(board)
 plt.imshow(board)
 
 plt.show()
