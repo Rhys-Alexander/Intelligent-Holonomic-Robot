@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# Colours
+# Colours, RGB
 RED = (255, 0, 0)
 GREEN = (0, 170, 18)
 BLUE = (0, 92, 230)
@@ -53,7 +53,7 @@ green_bot = (1775, 225, 90)
 pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
 yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
 brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
-puck_list = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
+puck_colours = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
 
 # cherry setup
 cherries = []
@@ -61,6 +61,14 @@ for cherry_holder in CHERRY_HOLDERS:
     x1, y1 = cherry_holder[0]
     for i in range(10):
         cherries.append((x1 + 15, y1 + 15 + i * 30))
+
+# team items
+blue_items = (
+    pink_pucks + yellow_pucks + brown_pucks + [blue_bot[:2]] + BLUE_PLATE_CENTRES
+)
+green_items = (
+    pink_pucks + yellow_pucks + brown_pucks + [green_bot[:2]] + GREEN_PLATE_CENTRES
+)
 
 # Blank board
 board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
@@ -124,7 +132,7 @@ start_state = board.copy()
 # To Refresh the board
 def refresh(board):
     board = start_state.copy()
-    for pucks, colour in puck_list:
+    for pucks, colour in puck_colours:
         for puck in pucks:
             drawPuck(board, puck, colour)
 
@@ -153,7 +161,32 @@ def refresh(board):
     return board
 
 
+def makeGraph(board):
+    for item in blue_items:
+        for item2 in blue_items:
+            if item != item2:
+                cv2.line(
+                    board,
+                    pt1=item,
+                    pt2=item2,
+                    color=BLUE,
+                    thickness=3,
+                )
+    for item in green_items:
+        for item2 in green_items:
+            if item != item2:
+                cv2.line(
+                    board,
+                    pt1=item,
+                    pt2=item2,
+                    color=GREEN,
+                    thickness=3,
+                )
+    return board
+
+
 board = refresh(board)
+board = makeGraph(board)
 plt.imshow(board)
 
 plt.show()
