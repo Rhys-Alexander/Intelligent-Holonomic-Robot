@@ -18,12 +18,32 @@ PUCK_RADIUS = 60
 PLATE_RADIUS = 225
 BOT_RADIUS = 200
 # 2 length tuple, x pos and y pos
-BLUE_START = (225, 225)
-GREEN_START = (1775, 225)
-BLUE_PLATES = [(1775, 1125), (225, 1875), (725, 2775), (1775, 2775)]
-GREEN_PLATES = [(225, 1125), (1775, 1875), (225, 2775), (1275, 2775)]
-# list of top left corners, 30 wide, 300 long
-CHERRY_HOLDERS = [(985, 0), (985, 2700), (0, 1350), (1970, 1350)]
+BLUE_START_CENTRE = (225, 225)
+BLUE_START = ((0, 0), (450, 450))
+GREEN_START_CENTRE = (1775, 225)
+GREEN_START = ((1550, 0), (2000, 450))
+# list of 2 length tuple, x pos and y pos
+BLUE_PLATE_CENTRES = [(1775, 1125), (225, 1875), (725, 2775), (1775, 2775)]
+GREEN_PLATE_CENTRES = [(225, 1125), (1775, 1875), (225, 2775), (1275, 2775)]
+# lists of 2 length tuple, top left and bottom right
+BLUE_PLATES = [
+    ((1550, 900), (2000, 1350)),
+    ((0, 1650), (450, 2100)),
+    ((500, 2550), (950, 3000)),
+    ((1550, 2550), (2000, 3000)),
+]
+GREEN_PLATES = [
+    ((0, 900), (450, 1350)),
+    ((1550, 1650), (2000, 2100)),
+    ((0, 2550), (450, 3000)),
+    ((1050, 2550), (1500, 3000)),
+]
+CHERRY_HOLDERS = [
+    ((985, 0), (1015, 300)),
+    ((985, 2700), (1015, 3000)),
+    ((0, 1350), (30, 1650)),
+    ((1970, 1350), (2000, 1650)),
+]
 
 # 3 length tuple, x pos, y pos, and rotation
 blue_bot = (225, 225, 90)
@@ -42,24 +62,16 @@ board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
 # board = cv2.imread("pics/orthogonal_board.png")
 
 
-def drawBox(pt, color, radius=PLATE_RADIUS):
-    x, y = pt
+def drawBox(pt, colour, radius_modifier=0):
+    p1, p2 = pt
+    if radius_modifier:
+        p1 = (p1[0] - radius_modifier, p1[1] - radius_modifier)
+        p2 = (p2[0] + radius_modifier, p2[1] + radius_modifier)
     cv2.rectangle(
         board,
-        pt1=(x - radius, y - radius),
-        pt2=(x + radius, y + radius),
-        color=color,
-        thickness=10,
-    )
-
-
-def drawCherryBox(pt):
-    x, y = pt
-    cv2.rectangle(
-        board,
-        pt1=(x, y),
-        pt2=(x + 30, y + 300),
-        color=GRAY,
+        pt1=p1,
+        pt2=p2,
+        color=colour,
         thickness=10,
     )
 
@@ -79,7 +91,7 @@ def drawPuck(board, pt, color):
 for start, colour in ((BLUE_START, BLUE), (GREEN_START, GREEN)):
     x, y = start
     drawBox(start, colour)
-    drawBox(start, colour, PLATE_RADIUS - 50)
+    drawBox(start, colour, radius_modifier=-50)
 
 for plate in BLUE_PLATES:
     drawBox(plate, BLUE)
@@ -88,7 +100,7 @@ for plate in GREEN_PLATES:
     drawBox(plate, GREEN)
 
 for holder in CHERRY_HOLDERS:
-    drawCherryBox(holder)
+    drawBox(holder, GRAY)
 
 start_state = board.copy()
 
