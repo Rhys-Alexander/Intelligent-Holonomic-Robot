@@ -54,7 +54,13 @@ pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
 yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
 brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
 puck_list = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
+
+# cherry setup
 cherries = []
+for cherry_holder in CHERRY_HOLDERS:
+    x1, y1 = cherry_holder[0]
+    for i in range(10):
+        cherries.append((x1 + 15, y1 + 15 + i * 30))
 
 # Blank board
 board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
@@ -87,6 +93,17 @@ def drawPuck(board, pt, color):
     )
 
 
+def drawCherry(board, pt):
+    x, y = pt
+    cv2.circle(
+        board,
+        center=(x, y),
+        radius=10,
+        color=RED,
+        thickness=10,
+    )
+
+
 # Board Setup
 for start, colour in ((BLUE_START, BLUE), (GREEN_START, GREEN)):
     x, y = start
@@ -110,6 +127,9 @@ def refresh(board):
     for pucks, colour in puck_list:
         for puck in pucks:
             drawPuck(board, puck, colour)
+
+    for cherry in cherries:
+        drawCherry(board, cherry)
 
     for bot, colour in ((blue_bot, BLUE), (green_bot, GREEN)):
         x, y, rot = bot
