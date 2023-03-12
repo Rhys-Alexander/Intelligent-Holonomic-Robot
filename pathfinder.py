@@ -86,9 +86,6 @@ class PathFinder:
             return True
 
     def checkCollisions(self, line_ends):
-        for puck in self.captive_pucks:
-            if self.checkCollision(line_ends, puck, PUCK_RADIUS):
-                return True
         if self.checkCollision(line_ends, self.enemy_bot, BOT_RADIUS):
             return True
         for holder in self.cherry_holders:
