@@ -1,7 +1,8 @@
 import math
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 
 # y,x
 BOARD_DIMENSIONS = (3000, 2000)
