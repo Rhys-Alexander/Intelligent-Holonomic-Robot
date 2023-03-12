@@ -45,49 +45,6 @@ CHERRY_HOLDERS = [
     ((1970, 1350), (2000, 1650)),
 ]
 
-# 3 length tuple, x pos, y pos, and rotation
-blue_bot = (225, 225, 90)
-green_bot = (1775, 225, 90)
-
-# lists of tuples, x pos, y pos
-pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
-yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
-brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
-puck_colours = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
-
-# cherry setup
-cherries = []
-for cherry_holder in CHERRY_HOLDERS:
-    x1, y1 = cherry_holder[0]
-    for i in range(10):
-        cherries.append((x1 + 15, y1 + 15 + i * 30))
-
-# team items
-blue_items = (
-    pink_pucks + yellow_pucks + brown_pucks + [blue_bot[:2]] + BLUE_PLATE_CENTRES
-)
-green_items = (
-    pink_pucks + yellow_pucks + brown_pucks + [green_bot[:2]] + GREEN_PLATE_CENTRES
-)
-
-team_colour = BLUE
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "green":
-            team_colour = GREEN
-        elif sys.argv[1] == "blue":
-            team_colour = BLUE
-        else:
-            print("Invalid argument, use green or blue")
-            exit()
-    else:
-        print("No argument given, defaulting to blue")
-
-if team_colour == BLUE:
-    items = blue_items
-else:
-    items = green_items
-
 # Blank board
 board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
 # Img board
@@ -147,6 +104,43 @@ for holder in CHERRY_HOLDERS:
 
 blank_state = board.copy()
 
+# 3 length tuple, x pos, y pos, and rotation
+blue_bot = (225, 225, 90)
+green_bot = (1775, 225, 90)
+
+# lists of tuples, x pos, y pos
+pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
+yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
+brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
+puck_colours = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
+all_pucks = pink_pucks + yellow_pucks + brown_pucks
+
+# cherry setup
+cherries = []
+for cherry_holder in CHERRY_HOLDERS:
+    x1, y1 = cherry_holder[0]
+    for i in range(10):
+        cherries.append((x1 + 15, y1 + 15 + i * 30))
+
+# team items
+team_colour = BLUE
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "green":
+            team_colour = GREEN
+        elif sys.argv[1] == "blue":
+            team_colour = BLUE
+        else:
+            print("Invalid argument, use green or blue")
+            exit()
+    else:
+        print("No argument given, defaulting to blue")
+
+if team_colour == BLUE:
+    items = all_pucks + [blue_bot[:2]] + BLUE_PLATE_CENTRES
+else:
+    items = all_pucks + [green_bot[:2]] + GREEN_PLATE_CENTRES
+
 # To Refresh the board
 def refresh(board):
     board = blank_state.copy()
@@ -194,6 +188,6 @@ def makeGraph(board):
 
 board = refresh(board)
 board = makeGraph(board)
-plt.imshow(board)
 
+plt.imshow(board)
 plt.show()
