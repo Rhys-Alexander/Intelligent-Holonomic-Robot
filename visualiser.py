@@ -50,6 +50,27 @@ CHERRY_HOLDERS = [
 
 
 class Board:
+    def __init__(self):
+        # Blank board
+        self.board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
+        # Img board
+        # self.board = cv2.imread("pics/orthogonal_board.png")
+
+        for start, colour in ((BLUE_START, BLUE), (GREEN_START, GREEN)):
+            self.drawBox(start, colour)
+            self.drawBox(start, colour, radius_modifier=-50)
+
+        for plate in BLUE_PLATES:
+            self.drawBox(plate, BLUE)
+
+        for plate in GREEN_PLATES:
+            self.drawBox(plate, GREEN)
+
+        for holder in CHERRY_HOLDERS:
+            self.drawBox(holder, GRAY)
+
+        self.blank_state = self.board.copy()
+
     def drawBox(self, pt, colour, radius_modifier=0):
         p1, p2 = pt
         if radius_modifier:
@@ -83,35 +104,14 @@ class Board:
             thickness=ITEM_THICKNESS,
         )
 
-    def __init__(self):
-        # Blank board
-        self.board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
-        # Img board
-        # self.board = cv2.imread("pics/orthogonal_board.png")
-
-        for start, colour in ((BLUE_START, BLUE), (GREEN_START, GREEN)):
-            self.drawBox(start, colour)
-            self.drawBox(start, colour, radius_modifier=-50)
-
-        for plate in BLUE_PLATES:
-            self.drawBox(plate, BLUE)
-
-        for plate in GREEN_PLATES:
-            self.drawBox(plate, GREEN)
-
-        for holder in CHERRY_HOLDERS:
-            self.drawBox(holder, GRAY)
-
-        self.blank_state = self.board.copy()
-
-    def drawRefresh(
+    def drawItems(
         self,
         pink_pucks,
         yellow_pucks,
         brown_pucks,
         cherries,
-        blue_bot,
-        green_bot,
+        my_bot,
+        enemy_bot,
     ):
         self.board = self.blank_state.copy()
         for pucks, colour in zip(
@@ -123,7 +123,7 @@ class Board:
         for cherry in cherries:
             self.drawCherry(cherry)
 
-        for bot, colour in ((blue_bot, BLUE), (green_bot, GREEN)):
+        for bot, colour in ((my_bot, RED), (enemy_bot, GRAY)):
             x, y, rot = bot
             cv2.circle(
                 self.board,
