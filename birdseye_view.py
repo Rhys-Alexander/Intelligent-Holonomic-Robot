@@ -1,6 +1,6 @@
 import sys
-import cv2
 import math
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -109,10 +109,9 @@ blue_bot = (225, 225, 90)
 green_bot = (1775, 225, 90)
 
 # lists of tuples, x pos, y pos
-pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
-yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
-brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
-puck_colours = ((pink_pucks, PINK), (yellow_pucks, YELLOW), (brown_pucks, BROWN))
+pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)] * 3
+yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)] * 3
+brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)] * 3
 all_pucks = pink_pucks + yellow_pucks + brown_pucks
 
 # cherry setup
@@ -144,7 +143,9 @@ else:
 # To Refresh the board
 def refresh(board):
     board = blank_state.copy()
-    for pucks, colour in puck_colours:
+    for pucks, colour in zip(
+        (pink_pucks, yellow_pucks, brown_pucks), (PINK, YELLOW, BROWN)
+    ):
         for puck in pucks:
             drawPuck(board, puck, colour)
 
@@ -173,21 +174,31 @@ def refresh(board):
     return board
 
 
-def makeGraph(board):
-    for i, item in enumerate(items[:-4]):
-        for item2 in items[i + 1 :]:
-            cv2.line(
-                board,
-                pt1=item,
-                pt2=item2,
-                color=team_colour,
-                thickness=2,
-            )
+def makeGraph(nodes):
+    graph = np.zeros((len(nodes), len(nodes)))
+    for i, item in enumerate(nodes[:-4]):
+        for j, item2 in enumerate(nodes[i + 1 :]):
+            graph[i, j + i + 1] = graph[j + i + 1, i] = math.dist(item, item2) + 1
+    return graph
+
+
+def drawGraph(board, graph, nodes):
+    for i, row in enumerate(graph):
+        for j, val in enumerate(row[i + 1 :]):
+            if val:
+                cv2.line(
+                    board,
+                    pt1=nodes[i],
+                    pt2=nodes[i + 1 + j],
+                    color=team_colour,
+                    thickness=2,
+                )
     return board
 
 
 board = refresh(board)
-board = makeGraph(board)
+graph = makeGraph(items)
+board = drawGraph(board, graph, items)
 
 plt.imshow(board)
 plt.show()
