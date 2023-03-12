@@ -1,27 +1,9 @@
 import sys
 import math
-import cv2
+import visualiser as vis
+
 import numpy as np
-import matplotlib.pyplot as plt
 from shapely.geometry import Point, LineString, Polygon
-
-# y,x
-BOARD_DIMENSIONS = (3000, 2000)
-
-# Colours, RGB
-RED = (255, 0, 0)
-GREEN = (0, 170, 18)
-BLUE = (0, 92, 230)
-PINK = (195, 0, 195)
-YELLOW = (255, 191, 0)
-BROWN = (46, 15, 23)
-GRAY = (173, 184, 153)
-
-# Thicknesses
-BOARD_THICKNESS = 10
-ITEM_THICKNESS = 15
-BOT_THICKNESS = 20
-GRAPH_THICKNESS = 2
 
 # Integer Radiuses
 PUCK_RADIUS = 60
@@ -56,47 +38,6 @@ CHERRY_HOLDERS = [
     ((1970, 1350), (2000, 1650)),
 ]
 
-# Blank board
-board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
-# Img board
-# board = cv2.imread("pics/orthogonal_board.png")
-
-
-def drawBox(pt, colour, radius_modifier=0):
-    p1, p2 = pt
-    if radius_modifier:
-        p1 = (p1[0] - radius_modifier, p1[1] - radius_modifier)
-        p2 = (p2[0] + radius_modifier, p2[1] + radius_modifier)
-    cv2.rectangle(
-        board,
-        pt1=p1,
-        pt2=p2,
-        color=colour,
-        thickness=BOARD_THICKNESS,
-    )
-
-
-def drawPuck(board, pt, colour):
-    x, y = pt
-    cv2.circle(
-        board,
-        center=(x, y),
-        radius=PUCK_RADIUS,
-        color=colour,
-        thickness=ITEM_THICKNESS,
-    )
-
-
-def drawCherry(board, pt):
-    x, y = pt
-    cv2.circle(
-        board,
-        center=(x, y),
-        radius=10,
-        color=RED,
-        thickness=ITEM_THICKNESS,
-    )
-
 
 def getFreeAndCaptivePucks(all_pucks, plates):
     captive_pucks = []
@@ -118,23 +59,6 @@ def checkCollision(line_ends, obstacle, radius):
         return True
 
 
-# Board Setup
-for start, colour in ((BLUE_START, BLUE), (GREEN_START, GREEN)):
-    x, y = start
-    drawBox(start, colour)
-    drawBox(start, colour, radius_modifier=-50)
-
-for plate in BLUE_PLATES:
-    drawBox(plate, BLUE)
-
-for plate in GREEN_PLATES:
-    drawBox(plate, GREEN)
-
-for holder in CHERRY_HOLDERS:
-    drawBox(holder, GRAY)
-
-blank_state = board.copy()
-
 # 3 length list, x pos, y pos, and rotation
 blue_bot = [225, 225, 90]
 green_bot = [1775, 225, 90]
@@ -155,13 +79,13 @@ for cherry_holder in CHERRY_HOLDERS:
         )
 
 # team items
-team_colour = BLUE
+blueTeam = True
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         if sys.argv[1] == "green":
-            team_colour = GREEN
+            blueTeam = False
         elif sys.argv[1] == "blue":
-            team_colour = BLUE
+            blueTeam = True
         else:
             print("Invalid argument, use green or blue")
             exit()
@@ -169,9 +93,9 @@ if __name__ == "__main__":
         print("No argument given, defaulting to blue")
 
 
-def getItems(team_colour):
+def getItems(blueTeam):
     all_pucks = pink_pucks + yellow_pucks + brown_pucks
-    if team_colour == BLUE:
+    if blueTeam:
         items = (
             getFreeAndCaptivePucks(all_pucks, BLUE_PLATES)[0]
             + [blue_bot[:2]]
@@ -186,40 +110,7 @@ def getItems(team_colour):
     return items
 
 
-items = getItems(team_colour)
-
-# To Refresh the board
-def drawRefresh(board):
-    board = blank_state.copy()
-    for pucks, colour in zip(
-        (pink_pucks, yellow_pucks, brown_pucks), (PINK, YELLOW, BROWN)
-    ):
-        for puck in pucks:
-            drawPuck(board, puck, colour)
-
-    for cherry in cherries:
-        drawCherry(board, cherry)
-
-    for bot, colour in ((blue_bot, BLUE), (green_bot, GREEN)):
-        x, y, rot = bot
-        cv2.circle(
-            board,
-            center=(x, y),
-            radius=BOT_RADIUS,
-            color=colour,
-            thickness=BOT_THICKNESS,
-        )
-        cv2.line(
-            board,
-            pt1=(x, y),
-            pt2=(
-                math.ceil(x + BOT_RADIUS * np.cos(np.radians(rot))),
-                math.ceil(y + BOT_RADIUS * np.sin(np.radians(rot))),
-            ),
-            color=colour,
-            thickness=BOT_THICKNESS,
-        )
-    return board
+items = getItems(blueTeam)
 
 
 def makeGraph(nodes):
@@ -234,24 +125,9 @@ def makeGraph(nodes):
     return graph
 
 
-def drawGraph(board, graph, nodes):
-    for i, row in enumerate(graph):
-        for j, val in enumerate(row[i + 1 :]):
-            if val:
-                cv2.line(
-                    board,
-                    pt1=nodes[i],
-                    pt2=nodes[i + 1 + j],
-                    color=team_colour,
-                    thickness=GRAPH_THICKNESS,
-                )
-    return board
-
-
 # TODO refreshState()
-board = drawRefresh(board)
+board = vis.Board()
+board.drawRefresh(pink_pucks, yellow_pucks, brown_pucks, cherries, blue_bot, green_bot)
 graph = makeGraph(items)
-board = drawGraph(board, graph, items)
-
-plt.imshow(board)
-plt.show()
+board.drawGraph(graph, items)
+board.display()
