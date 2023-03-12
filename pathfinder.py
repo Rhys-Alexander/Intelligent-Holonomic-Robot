@@ -3,7 +3,7 @@ import math
 import visualiser as vis
 
 import numpy as np
-from shapely.geometry import Point, LineString, MultiPoint
+from shapely.geometry import Point, LineString, Polygon
 
 # Integer Radiuses
 PUCK_RADIUS = 60
@@ -92,11 +92,12 @@ class PathFinder:
         if self.checkCollision(line_ends, self.enemy_bot, BOT_RADIUS):
             return True
         for holder in self.cherry_holders:
-            if MultiPoint([*holder]).minimum_rotated_rectangle.intersects(
+            x1, y1 = holder[0]
+            x2, y2 = holder[1]
+            if Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)]).intersects(
                 LineString(line_ends)
             ):
                 return True
-        # TODO check collision with cherry holders
 
     def makeGraph(self):
         graph = np.zeros((len(self.items), len(self.items)))
