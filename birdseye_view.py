@@ -5,6 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from shapely.geometry import Point, LineString, Polygon
 
+# y,x
+BOARD_DIMENSIONS = (3000, 2000)
+
 # Colours, RGB
 RED = (255, 0, 0)
 GREEN = (0, 170, 18)
@@ -14,10 +17,17 @@ YELLOW = (255, 191, 0)
 BROWN = (46, 15, 23)
 GRAY = (173, 184, 153)
 
+# Thicknesses
+BOARD_THICKNESS = 10
+ITEM_THICKNESS = 15
+BOT_THICKNESS = 20
+GRAPH_THICKNESS = 2
+
 # Integer Radiuses
 PUCK_RADIUS = 60
 PLATE_RADIUS = 225
 BOT_RADIUS = 200
+CHERRY_RADIUS = 15
 # 2 length tuple, x pos and y pos
 BLUE_START_CENTRE = (225, 225)
 BLUE_START = ((0, 0), (450, 450))
@@ -47,7 +57,7 @@ CHERRY_HOLDERS = [
 ]
 
 # Blank board
-board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
+board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
 # Img board
 # board = cv2.imread("pics/orthogonal_board.png")
 
@@ -62,7 +72,7 @@ def drawBox(pt, colour, radius_modifier=0):
         pt1=p1,
         pt2=p2,
         color=colour,
-        thickness=10,
+        thickness=BOARD_THICKNESS,
     )
 
 
@@ -73,7 +83,7 @@ def drawPuck(board, pt, colour):
         center=(x, y),
         radius=PUCK_RADIUS,
         color=colour,
-        thickness=10,
+        thickness=ITEM_THICKNESS,
     )
 
 
@@ -84,7 +94,7 @@ def drawCherry(board, pt):
         center=(x, y),
         radius=10,
         color=RED,
-        thickness=10,
+        thickness=ITEM_THICKNESS,
     )
 
 
@@ -100,12 +110,11 @@ def getFreeAndCaptivePucks(all_pucks, plates):
     return free_pucks, captive_pucks
 
 
-# TODO: Fix this
-def checkEnemyCollision(line_ends, enemy_bot, radius):
+def checkCollision(line_ends, obstacle, radius):
     margin = BOT_RADIUS + radius
-    enemy_bot = Point(*enemy_bot)
+    obstacle = Point(*obstacle)
     line = LineString(line_ends)
-    if line.distance(enemy_bot) <= margin:
+    if line.distance(obstacle) <= margin:
         return True
 
 
@@ -141,7 +150,9 @@ cherries = []
 for cherry_holder in CHERRY_HOLDERS:
     x1, y1 = cherry_holder[0]
     for i in range(10):
-        cherries.append((x1 + 15, y1 + 15 + i * 30))
+        cherries.append(
+            (x1 + CHERRY_RADIUS, y1 + CHERRY_RADIUS + i * CHERRY_RADIUS * 2)
+        )
 
 # team items
 team_colour = BLUE
@@ -196,7 +207,7 @@ def drawRefresh(board):
             center=(x, y),
             radius=BOT_RADIUS,
             color=colour,
-            thickness=15,
+            thickness=BOT_THICKNESS,
         )
         cv2.line(
             board,
@@ -206,7 +217,7 @@ def drawRefresh(board):
                 math.ceil(y + BOT_RADIUS * np.sin(np.radians(rot))),
             ),
             color=colour,
-            thickness=15,
+            thickness=BOT_THICKNESS,
         )
     return board
 
@@ -216,9 +227,9 @@ def makeGraph(nodes):
     for i, item in enumerate(nodes[:-4]):
         for j, item2 in enumerate(nodes[i + 1 :]):
             # graph[i, j + i + 1] = graph[j + i + 1, i] = math.dist(item, item2) + 1
-            if not checkEnemyCollision([item, item2], green_bot[:2], BOT_RADIUS):
+            if not checkCollision([item, item2], green_bot[:2], BOT_RADIUS):
                 graph[i, j + i + 1] = math.dist(item, item2) + 1
-            if not checkEnemyCollision([item2, item], green_bot[:2], BOT_RADIUS):
+            if not checkCollision([item2, item], green_bot[:2], BOT_RADIUS):
                 graph[j + i + 1, i] = math.dist(item, item2) + 1
     return graph
 
@@ -232,7 +243,7 @@ def drawGraph(board, graph, nodes):
                     pt1=nodes[i],
                     pt2=nodes[i + 1 + j],
                     color=team_colour,
-                    thickness=2,
+                    thickness=GRAPH_THICKNESS,
                 )
     return board
 
