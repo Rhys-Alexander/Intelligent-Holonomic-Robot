@@ -1,8 +1,8 @@
+import sys
 import cv2
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-
 
 # Colours, RGB
 RED = (255, 0, 0)
@@ -16,7 +16,7 @@ GRAY = (173, 184, 153)
 # Integer Radiuses
 PUCK_RADIUS = 60
 PLATE_RADIUS = 225
-BOT_RADIUS = 200
+BOT_RADIUS = 220
 # 2 length tuple, x pos and y pos
 BLUE_START_CENTRE = (225, 225)
 BLUE_START = ((0, 0), (450, 450))
@@ -70,6 +70,24 @@ green_items = (
     pink_pucks + yellow_pucks + brown_pucks + [green_bot[:2]] + GREEN_PLATE_CENTRES
 )
 
+team_colour = BLUE
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "green":
+            team_colour = GREEN
+        elif sys.argv[1] == "blue":
+            team_colour = BLUE
+        else:
+            print("Invalid argument, use green or blue")
+            exit()
+    else:
+        print("No argument given, defaulting to blue")
+
+if team_colour == BLUE:
+    items = blue_items
+else:
+    items = green_items
+
 # Blank board
 board = 255 * np.ones(shape=[3000, 2000, 3], dtype=np.uint8)
 # Img board
@@ -90,13 +108,13 @@ def drawBox(pt, colour, radius_modifier=0):
     )
 
 
-def drawPuck(board, pt, color):
+def drawPuck(board, pt, colour):
     x, y = pt
     cv2.circle(
         board,
         center=(x, y),
         radius=PUCK_RADIUS,
-        color=color,
+        color=colour,
         thickness=10,
     )
 
@@ -127,11 +145,11 @@ for plate in GREEN_PLATES:
 for holder in CHERRY_HOLDERS:
     drawBox(holder, GRAY)
 
-start_state = board.copy()
+blank_state = board.copy()
 
 # To Refresh the board
 def refresh(board):
-    board = start_state.copy()
+    board = blank_state.copy()
     for pucks, colour in puck_colours:
         for puck in pucks:
             drawPuck(board, puck, colour)
@@ -146,42 +164,31 @@ def refresh(board):
             center=(x, y),
             radius=BOT_RADIUS,
             color=colour,
-            thickness=20,
+            thickness=15,
         )
         cv2.line(
             board,
             pt1=(x, y),
             pt2=(
-                math.ceil(x + 150 * np.cos(np.radians(rot))),
-                math.ceil(y + 150 * np.sin(np.radians(rot))),
+                math.ceil(x + 225 * np.cos(np.radians(rot))),
+                math.ceil(y + 225 * np.sin(np.radians(rot))),
             ),
             color=colour,
-            thickness=40,
+            thickness=30,
         )
     return board
 
 
 def makeGraph(board):
-    for item in blue_items:
-        for item2 in blue_items:
-            if item != item2:
-                cv2.line(
-                    board,
-                    pt1=item,
-                    pt2=item2,
-                    color=BLUE,
-                    thickness=3,
-                )
-    for item in green_items:
-        for item2 in green_items:
-            if item != item2:
-                cv2.line(
-                    board,
-                    pt1=item,
-                    pt2=item2,
-                    color=GREEN,
-                    thickness=3,
-                )
+    for i, item in enumerate(items[:-4]):
+        for item2 in items[i + 1 :]:
+            cv2.line(
+                board,
+                pt1=item,
+                pt2=item2,
+                color=team_colour,
+                thickness=2,
+            )
     return board
 
 
