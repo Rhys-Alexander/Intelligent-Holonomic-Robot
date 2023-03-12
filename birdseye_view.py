@@ -3,6 +3,7 @@ import math
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from shapely.geometry import Point, LineString, Polygon
 
 # Colours, RGB
 RED = (255, 0, 0)
@@ -16,7 +17,7 @@ GRAY = (173, 184, 153)
 # Integer Radiuses
 PUCK_RADIUS = 60
 PLATE_RADIUS = 225
-BOT_RADIUS = 220
+BOT_RADIUS = 200
 # 2 length tuple, x pos and y pos
 BLUE_START_CENTRE = (225, 225)
 BLUE_START = ((0, 0), (450, 450))
@@ -99,32 +100,13 @@ def getFreeAndCaptivePucks(all_pucks, plates):
     return free_pucks, captive_pucks
 
 
-# TODO check if necessary
-def lineFromPoints(pts):
-    p1, p2 = pts
-    x1, y1 = p1
-    x2, y2 = p2
-    a = y2 - y1
-    b = x1 - x2
-    c = x2 * y1 - x1 * y2
-    return a, b, c
-
-
 # TODO: Fix this
-def checkEnemyCollision(pts, enemy_bot):
-    a, b, c = lineFromPoints(pts)
-    if not a and not b:
-        return False
-    margin = BOT_RADIUS * 2
-    x, y = enemy_bot
-    x1, y1 = pts[0]
-    x2, y2 = pts[1]
-    x1, x2 = min(x1, x2) - margin, max(x1, x2) + margin
-    y1, y2 = min(y1, y2) - margin, max(y1, y2) + margin
-    if x1 <= x <= x2 and y1 <= y <= y2:
-        dist = (abs(a * x + b * y + c)) / math.sqrt(a * a + b * b)
-        if dist <= margin:
-            return True
+def checkEnemyCollision(line_ends, enemy_bot, radius):
+    margin = BOT_RADIUS + radius
+    enemy_bot = Point(*enemy_bot)
+    line = LineString(line_ends)
+    if line.distance(enemy_bot) <= margin:
+        return True
 
 
 # Board Setup
@@ -220,11 +202,11 @@ def drawRefresh(board):
             board,
             pt1=(x, y),
             pt2=(
-                math.ceil(x + 225 * np.cos(np.radians(rot))),
-                math.ceil(y + 225 * np.sin(np.radians(rot))),
+                math.ceil(x + BOT_RADIUS * np.cos(np.radians(rot))),
+                math.ceil(y + BOT_RADIUS * np.sin(np.radians(rot))),
             ),
             color=colour,
-            thickness=30,
+            thickness=15,
         )
     return board
 
@@ -233,7 +215,11 @@ def makeGraph(nodes):
     graph = np.zeros((len(nodes), len(nodes)))
     for i, item in enumerate(nodes[:-4]):
         for j, item2 in enumerate(nodes[i + 1 :]):
-            graph[i, j + i + 1] = graph[j + i + 1, i] = math.dist(item, item2) + 1
+            # graph[i, j + i + 1] = graph[j + i + 1, i] = math.dist(item, item2) + 1
+            if not checkEnemyCollision([item, item2], green_bot[:2], BOT_RADIUS):
+                graph[i, j + i + 1] = math.dist(item, item2) + 1
+            if not checkEnemyCollision([item2, item], green_bot[:2], BOT_RADIUS):
+                graph[j + i + 1, i] = math.dist(item, item2) + 1
     return graph
 
 
