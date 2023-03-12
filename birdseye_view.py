@@ -87,6 +87,46 @@ def drawCherry(board, pt):
     )
 
 
+def getFreeAndCaptivePucks(all_pucks, plates):
+    captive_pucks = []
+    for puck in all_pucks:
+        for plate in plates:
+            p1x, p1y = plate[0]
+            p2x, p2y = plate[1]
+            if p1x <= puck[0] <= p2x and p1y <= puck[1] <= p2y:
+                captive_pucks.append(puck)
+    free_pucks = [puck for puck in all_pucks if puck not in captive_pucks]
+    return free_pucks, captive_pucks
+
+
+# TODO check if necessary
+def lineFromPoints(pts):
+    p1, p2 = pts
+    x1, y1 = p1
+    x2, y2 = p2
+    a = y2 - y1
+    b = x1 - x2
+    c = x2 * y1 - x1 * y2
+    return a, b, c
+
+
+# TODO: Fix this
+def checkEnemyCollision(pts, enemy_bot):
+    a, b, c = lineFromPoints(pts)
+    if not a and not b:
+        return False
+    margin = BOT_RADIUS * 2
+    x, y = enemy_bot
+    x1, y1 = pts[0]
+    x2, y2 = pts[1]
+    x1, x2 = min(x1, x2) - margin, max(x1, x2) + margin
+    y1, y2 = min(y1, y2) - margin, max(y1, y2) + margin
+    if x1 <= x <= x2 and y1 <= y <= y2:
+        dist = (abs(a * x + b * y + c)) / math.sqrt(a * a + b * b)
+        if dist <= margin:
+            return True
+
+
 # Board Setup
 for start, colour in ((BLUE_START, BLUE), (GREEN_START, GREEN)):
     x, y = start
@@ -104,15 +144,15 @@ for holder in CHERRY_HOLDERS:
 
 blank_state = board.copy()
 
-# 3 length tuple, x pos, y pos, and rotation
-blue_bot = (225, 225, 90)
-green_bot = (1775, 225, 90)
+# 3 length list, x pos, y pos, and rotation
+blue_bot = [225, 225, 90]
+green_bot = [1775, 225, 90]
+green_bot = [1000, 1500, 90]
 
 # lists of tuples, x pos, y pos
 pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)] * 3
 yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)] * 3
 brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)] * 3
-all_pucks = pink_pucks + yellow_pucks + brown_pucks
 
 # cherry setup
 cherries = []
@@ -135,13 +175,28 @@ if __name__ == "__main__":
     else:
         print("No argument given, defaulting to blue")
 
-if team_colour == BLUE:
-    items = all_pucks + [blue_bot[:2]] + BLUE_PLATE_CENTRES
-else:
-    items = all_pucks + [green_bot[:2]] + GREEN_PLATE_CENTRES
+
+def getItems(team_colour):
+    all_pucks = pink_pucks + yellow_pucks + brown_pucks
+    if team_colour == BLUE:
+        items = (
+            getFreeAndCaptivePucks(all_pucks, BLUE_PLATES)[0]
+            + [blue_bot[:2]]
+            + BLUE_PLATE_CENTRES
+        )
+    else:
+        items = (
+            getFreeAndCaptivePucks(all_pucks, GREEN_PLATES)[0]
+            + [green_bot[:2]]
+            + GREEN_PLATE_CENTRES
+        )
+    return items
+
+
+items = getItems(team_colour)
 
 # To Refresh the board
-def refresh(board):
+def drawRefresh(board):
     board = blank_state.copy()
     for pucks, colour in zip(
         (pink_pucks, yellow_pucks, brown_pucks), (PINK, YELLOW, BROWN)
@@ -196,7 +251,8 @@ def drawGraph(board, graph, nodes):
     return board
 
 
-board = refresh(board)
+# TODO refreshState()
+board = drawRefresh(board)
 graph = makeGraph(items)
 board = drawGraph(board, graph, items)
 
