@@ -94,8 +94,11 @@ class PathFinder:
         for holder in self.cherry_holders:
             x1, y1 = holder[0]
             x2, y2 = holder[1]
-            if Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)]).intersects(
-                LineString(line_ends)
+            if (
+                Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)]).distance(
+                    LineString(line_ends)
+                )
+                <= BOT_RADIUS
             ):
                 return True
 
