@@ -37,17 +37,18 @@ CHERRY_HOLDERS = [
     ((0, 1350), (30, 1650)),
     ((1970, 1350), (2000, 1650)),
 ]
+MAX_CAPACITY = 18
 
 
 class PathFinder:
     def __init__(self, blueTeam):
-        self.blueTeam = blueTeam
+        self.capacity = MAX_CAPACITY
         self.start = BLUE_START_CENTRE if blueTeam else GREEN_START_CENTRE
         self.PLATE_CENTRES = BLUE_PLATE_CENTRES if blueTeam else GREEN_PLATE_CENTRES
         self.plates = BLUE_PLATES if blueTeam else GREEN_PLATES
-        self.cherry_holders = (
-            CHERRY_HOLDERS  # 3 length list, x pos, y pos, and rotation
-        )
+        self.cherry_holders = CHERRY_HOLDERS
+        self.blueTeam = blueTeam
+        # tuple, x pos, y pos, rotation
         self.bot = [225, 225, 90] if blueTeam else [1775, 225, 90]
         self.enemy_bot = [1775, 225, 90] if blueTeam else [225, 225, 90]
         # lists of tuples, x pos, y pos
@@ -121,6 +122,13 @@ class PathFinder:
         )
         board.drawGraph(self.graph, self.items)
         board.display()
+
+    def getShortestPath(self):
+        # get path from start through search depth items to a target
+        start = self.bot[:2]
+        searchDepth = min(self.capacity, len(self.free_pucks))
+        targets = self.plates
+        pass
 
 
 if __name__ == "__main__":
