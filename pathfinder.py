@@ -44,6 +44,7 @@ class PathFinder:
     def __init__(self, blueTeam):
         self.capacity = MAX_CAPACITY
         self.start = BLUE_START_CENTRE if blueTeam else GREEN_START_CENTRE
+        self.enemy_start = GREEN_START if blueTeam else BLUE_START
         self.PLATE_CENTRES = BLUE_PLATE_CENTRES if blueTeam else GREEN_PLATE_CENTRES
         self.plates = BLUE_PLATES if blueTeam else GREEN_PLATES
         self.cherry_holders = CHERRY_HOLDERS
@@ -70,7 +71,7 @@ class PathFinder:
         self.all_pucks = self.pink_pucks + self.yellow_pucks + self.brown_pucks
         captive_pucks = []
         for puck in self.all_pucks:
-            for plate in self.plates:
+            for plate in self.plates + [self.enemy_start]:
                 p1x, p1y = plate[0]
                 p2x, p2y = plate[1]
                 if p1x <= puck[0] <= p2x and p1y <= puck[1] <= p2y:
