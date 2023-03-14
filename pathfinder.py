@@ -64,6 +64,7 @@ class PathFinder:
                 )
         self.setItems()
         self.makeGraph()
+        self.setPath()
 
     def setItems(self):
         self.all_pucks = self.pink_pucks + self.yellow_pucks + self.brown_pucks
@@ -77,7 +78,7 @@ class PathFinder:
         free_pucks = [puck for puck in self.all_pucks if puck not in captive_pucks]
         self.free_pucks = free_pucks
         self.captive_pucks = captive_pucks
-        self.items = self.free_pucks + [self.bot[:2]] + self.PLATE_CENTRES
+        self.items = self.free_pucks + self.PLATE_CENTRES + [self.bot[:2]]
 
     def checkCollision(self, line_ends, obstacle, radius):
         margin = BOT_RADIUS + radius
@@ -102,7 +103,7 @@ class PathFinder:
 
     def makeGraph(self):
         graph = np.zeros((len(self.items), len(self.items)))
-        for i, item in enumerate(self.items[:-4]):
+        for i, item in enumerate(self.items[: -(len(self.PLATE_CENTRES) + 1)]):
             for j, item2 in enumerate(self.items[i + 1 :]):
                 if not self.checkCollisions([item, item2]):
                     graph[i, j + i + 1] = graph[j + i + 1, i] = (
@@ -121,14 +122,29 @@ class PathFinder:
             self.enemy_bot,
         )
         board.drawGraph(self.graph, self.items)
+        board.drawPath(self.path)
         board.display()
 
-    def getShortestPath(self):
-        # get path from start through search depth items to a target
-        start = self.bot[:2]
-        searchDepth = min(self.capacity, len(self.free_pucks))
-        targets = self.plates
-        pass
+    def getGreedyPath(self):
+        max_depth = min(self.capacity, len(self.free_pucks))
+        path = [len(self.items) - 1]
+        next = -1
+        for _ in range(max_depth):
+            edges = self.graph[next][: -(len(self.PLATE_CENTRES) + 1)]
+            pairs = {
+                j: node for j, node in enumerate(edges) if not j in path and node != 0
+            }
+            next = min(pairs, key=pairs.get)
+            path.append(next)
+        edges = self.graph[next][-(len(self.PLATE_CENTRES) + 1) : -1]
+        pairs = {j: node for j, node in enumerate(edges) if not j in path and node != 0}
+        next = min(pairs, key=pairs.get)
+        path.append(next + len(self.items) - (len(self.PLATE_CENTRES) + 1))
+        path = [self.items[i] for i in path]
+        return path
+
+    def setPath(self):
+        self.path = self.getGreedyPath()
 
 
 if __name__ == "__main__":
