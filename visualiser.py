@@ -21,6 +21,7 @@ BOARD_THICKNESS = 10
 ITEM_THICKNESS = 15
 BOT_THICKNESS = 20
 GRAPH_THICKNESS = 2
+PATH_THICKNESS = 10
 
 # Integer Radiuses
 PUCK_RADIUS = 60
@@ -154,6 +155,16 @@ class Board:
                         color=RED,
                         thickness=GRAPH_THICKNESS,
                     )
+
+    def drawPath(self, path):
+        for pt1, pt2 in zip(path, path[1:]):
+            cv2.line(
+                self.board,
+                pt1=pt1,
+                pt2=pt2,
+                color=GREEN,
+                thickness=PATH_THICKNESS,
+            )
 
     def display(self):
         cv2.imshow("Board", self.board)
