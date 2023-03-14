@@ -38,7 +38,7 @@ CHERRY_HOLDERS = [
     ((1970, 1350), (2000, 1650)),
 ]
 MAX_CAPACITY = 18
-ENEMY_BOT_WEIGHT = 10**9
+ENEMY_BOT_WEIGHT = 10**8
 
 
 class PathFinder:
@@ -51,8 +51,8 @@ class PathFinder:
         self.cherry_holders = CHERRY_HOLDERS
         self.blueTeam = blueTeam
         # tuple, x pos, y pos, rotation
-        self.bot = [225, 225, 90] if blueTeam else [1775, 225, 90]
-        self.enemy_bot = [1775, 225, 90] if blueTeam else [225, 225, 90]
+        self.bot = (225, 225, 90) if blueTeam else (1775, 225, 90)
+        self.enemy_bot = (1775, 225, 90) if blueTeam else (225, 225, 90)
         # lists of tuples, x pos, y pos
         self.pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)] * 3
         self.yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)] * 3
@@ -64,6 +64,7 @@ class PathFinder:
                 self.cherries.append(
                     (x1 + CHERRY_RADIUS, y1 + CHERRY_RADIUS + i * CHERRY_RADIUS * 2)
                 )
+        # self.randomise()
         self.setItems()
         self.makeGraph()
         self.setPath()
@@ -114,7 +115,10 @@ class PathFinder:
                         + 1
                         + ENEMY_BOT_WEIGHT
                         * 1
-                        / (math.dist(item2, self.enemy_bot[:2]) ** 2)
+                        / (
+                            (LineString([item, item2]).distance(Point(self.enemy_bot)))
+                            ** 2
+                        )
                     )
         self.graph = graph
 
