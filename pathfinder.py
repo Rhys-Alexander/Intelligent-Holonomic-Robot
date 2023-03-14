@@ -69,6 +69,32 @@ class PathFinder:
         self.makeGraph()
         self.setPath()
 
+    def randomise(self):
+        import random
+
+        self.pink_pucks = [
+            (random.randint(200, 2000), random.randint(200, 3000))
+            for _ in self.pink_pucks
+        ]
+        self.yellow_pucks = [
+            (random.randint(200, 2000), random.randint(200, 3000))
+            for _ in self.yellow_pucks
+        ]
+        self.brown_pucks = [
+            (random.randint(200, 2000), random.randint(200, 3000))
+            for _ in self.brown_pucks
+        ]
+        self.enemy_bot = (
+            random.randint(200, 2000),
+            random.randint(200, 3000),
+            random.randint(0, 360),
+        )
+        self.bot = (
+            random.randint(200, 2000),
+            random.randint(200, 3000),
+            random.randint(0, 360),
+        )
+
     def setItems(self):
         self.all_pucks = self.pink_pucks + self.yellow_pucks + self.brown_pucks
         captive_pucks = []
