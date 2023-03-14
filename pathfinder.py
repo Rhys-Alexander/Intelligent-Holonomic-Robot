@@ -38,6 +38,7 @@ CHERRY_HOLDERS = [
     ((1970, 1350), (2000, 1650)),
 ]
 MAX_CAPACITY = 18
+ENEMY_BOT_WEIGHT = 10**9
 
 
 class PathFinder:
@@ -106,9 +107,14 @@ class PathFinder:
         graph = np.zeros((len(self.items), len(self.items)))
         for i, item in enumerate(self.items[: -(len(self.PLATE_CENTRES) + 1)]):
             for j, item2 in enumerate(self.items[i + 1 :]):
+                # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
                 if not self.checkCollisions([item, item2]):
                     graph[i, j + i + 1] = graph[j + i + 1, i] = (
-                        math.dist(item, item2) + 1
+                        math.dist(item, item2)
+                        + 1
+                        + ENEMY_BOT_WEIGHT
+                        * 1
+                        / (math.dist(item2, self.enemy_bot[:2]) ** 2)
                     )
         self.graph = graph
 
