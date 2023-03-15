@@ -57,13 +57,7 @@ class PathFinder:
         self.pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)] * 3
         self.yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)] * 3
         self.brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)] * 3
-        self.cherries = []
-        for cherry_holder in CHERRY_HOLDERS:
-            x1, y1 = cherry_holder[0]
-            for i in range(10):
-                self.cherries.append(
-                    (x1 + CHERRY_RADIUS, y1 + CHERRY_RADIUS + i * CHERRY_RADIUS * 2)
-                )
+        self.cherries = [(1000, 150), (1000, 2850), (15, 1500), (1985, 1500)]
         self.randomise()
         self.setItems()
         self.makeGraph()
@@ -107,7 +101,21 @@ class PathFinder:
         free_pucks = [puck for puck in self.all_pucks if puck not in captive_pucks]
         self.free_pucks = free_pucks
         self.captive_pucks = captive_pucks
-        self.items = self.free_pucks + self.PLATE_CENTRES + [self.bot[:2]]
+        cherry_collection_points = []
+        for x, y in self.cherries:
+            pt1 = (x - BOT_RADIUS - CHERRY_RADIUS, y)
+            pt2 = (x + BOT_RADIUS + CHERRY_RADIUS, y)
+            if 0 <= pt1[0] <= 2000:
+                cherry_collection_points.append(pt1)
+            if 0 <= pt2[0] <= 2000:
+                cherry_collection_points.append(pt2)
+        self.cherry_collection_points = cherry_collection_points
+        self.items = (
+            self.free_pucks
+            + self.cherry_collection_points
+            + self.PLATE_CENTRES
+            + [self.bot[:2]]
+        )
 
     def checkCollision(self, line_ends, obstacle, radius):
         margin = BOT_RADIUS + radius
@@ -119,16 +127,20 @@ class PathFinder:
     def checkCollisions(self, line_ends):
         if self.checkCollision(line_ends, self.enemy_bot, BOT_RADIUS):
             return True
-        for holder in self.cherry_holders:
-            x1, y1 = holder[0]
-            x2, y2 = holder[1]
-            if (
-                Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)]).distance(
-                    LineString(line_ends)
-                )
-                <= BOT_RADIUS
-            ):
-                return True
+        if (
+            line_ends[0] not in self.cherry_collection_points
+            and line_ends[1] not in self.cherry_collection_points
+        ):
+            for holder in self.cherry_holders:
+                x1, y1 = holder[0]
+                x2, y2 = holder[1]
+                if (
+                    Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)]).distance(
+                        LineString(line_ends)
+                    )
+                    <= BOT_RADIUS
+                ):
+                    return True
 
     def makeGraph(self):
         graph = np.zeros((len(self.items), len(self.items)))

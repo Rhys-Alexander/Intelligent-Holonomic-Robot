@@ -97,10 +97,10 @@ class Board:
 
     def drawCherry(self, pt):
         x, y = pt
-        cv2.circle(
+        cv2.line(
             self.board,
-            center=(x, y),
-            radius=10,
+            pt1=(x, y - 100),
+            pt2=(x, y + 100),
             color=RED,
             thickness=ITEM_THICKNESS,
         )
