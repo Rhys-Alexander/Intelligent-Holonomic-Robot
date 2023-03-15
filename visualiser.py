@@ -107,22 +107,24 @@ class Board:
 
     def drawItems(
         self,
-        pink_pucks,
-        yellow_pucks,
-        brown_pucks,
-        cherries,
         my_bot,
         enemy_bot,
+        pink_pucks=False,
+        yellow_pucks=False,
+        brown_pucks=False,
+        cherries=False,
     ):
         self.board = self.blank_state.copy()
         for pucks, colour in zip(
             (pink_pucks, yellow_pucks, brown_pucks), (PINK, YELLOW, BROWN)
         ):
-            for puck in pucks:
-                self.drawPuck(puck, colour)
+            if pucks:
+                for puck in pucks:
+                    self.drawPuck(puck, colour)
 
-        for cherry in cherries:
-            self.drawCherry(cherry)
+        if cherries:
+            for cherry in cherries:
+                self.drawCherry(cherry)
 
         for bot, colour in ((my_bot, RED), (enemy_bot, GRAY)):
             x, y, rot = bot
