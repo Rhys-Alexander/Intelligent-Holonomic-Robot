@@ -93,7 +93,10 @@ class PathFinder:
             for plate in self.plates + [self.enemy_start]:
                 p1x, p1y = plate[0]
                 p2x, p2y = plate[1]
-                if p1x <= puck[0] <= p2x and p1y <= puck[1] <= p2y:
+                if (
+                    p1x - PUCK_RADIUS <= puck[0] <= p2x + PUCK_RADIUS
+                    and p1y - PUCK_RADIUS <= puck[1] <= p2y + PUCK_RADIUS
+                ):
                     captive_pucks.append(puck)
         free_pucks = [puck for puck in self.all_pucks if puck not in captive_pucks]
         self.free_pucks = free_pucks
