@@ -99,8 +99,8 @@ class Board:
         x, y = pt
         cv2.line(
             self.board,
-            pt1=(x, y - 100),
-            pt2=(x, y + 100),
+            pt1=(x, y - 80),
+            pt2=(x, y + 80),
             color=RED,
             thickness=ITEM_THICKNESS,
         )
