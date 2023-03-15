@@ -178,7 +178,7 @@ class PathFinder:
                 print("No path found")
                 break
         edges = self.graph[next][-(len(self.PLATE_CENTRES) + 1) : -1]
-        pairs = {j: node for j, node in enumerate(edges) if not j in path and node != 0}
+        pairs = {j: node for j, node in enumerate(edges) if node != 0}
         try:
             next = min(pairs, key=pairs.get)
             path.append(next + len(self.items) - (len(self.PLATE_CENTRES) + 1))
