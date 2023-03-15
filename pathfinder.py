@@ -9,7 +9,6 @@ from shapely.geometry import Point, LineString, Polygon
 PUCK_RADIUS = 60
 PLATE_RADIUS = 225
 BOT_RADIUS = 200
-CHERRY_RADIUS = 15
 # 2 length tuple, x pos and y pos
 BLUE_START_CENTRE = (225, 225)
 BLUE_START = ((0, 0), (450, 450))
@@ -48,7 +47,6 @@ class PathFinder:
         self.enemy_start = GREEN_START if blueTeam else BLUE_START
         self.PLATE_CENTRES = BLUE_PLATE_CENTRES if blueTeam else GREEN_PLATE_CENTRES
         self.plates = BLUE_PLATES if blueTeam else GREEN_PLATES
-        self.cherry_holders = CHERRY_HOLDERS
         self.blueTeam = blueTeam
         # tuple, x pos, y pos, rotation
         self.bot = (225, 225, 90) if blueTeam else (1775, 225, 90)
@@ -57,12 +55,6 @@ class PathFinder:
         self.pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)] * 3
         self.yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)] * 3
         self.brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)] * 3
-        self.cherries = [
-            (1000, BOT_RADIUS),
-            (1000, 3000 - BOT_RADIUS),
-            (15, 1500),
-            (1985, 1500),
-        ]
         self.randomise()
         self.setItems()
         self.makeGraph()
@@ -106,21 +98,7 @@ class PathFinder:
         free_pucks = [puck for puck in self.all_pucks if puck not in captive_pucks]
         self.free_pucks = free_pucks
         self.captive_pucks = captive_pucks
-        cherry_collection_points = []
-        for x, y in self.cherries:
-            pt1 = (x - BOT_RADIUS - CHERRY_RADIUS * 2, y)
-            pt2 = (x + BOT_RADIUS + CHERRY_RADIUS * 2, y)
-            if 0 <= pt1[0] <= 2000:
-                cherry_collection_points.append(pt1)
-            if 0 <= pt2[0] <= 2000:
-                cherry_collection_points.append(pt2)
-        self.cherry_collection_points = cherry_collection_points
-        self.items = (
-            self.free_pucks
-            + self.cherry_collection_points
-            + self.PLATE_CENTRES
-            + [self.bot[:2]]
-        )
+        self.items = self.free_pucks + self.PLATE_CENTRES + [self.bot[:2]]
 
     def checkCollision(self, line_ends, obstacle, radius):
         margin = BOT_RADIUS + radius
@@ -132,7 +110,7 @@ class PathFinder:
     def checkCollisions(self, line_ends):
         if self.checkCollision(line_ends, self.enemy_bot, BOT_RADIUS):
             return True
-        for holder in self.cherry_holders:
+        for holder in CHERRY_HOLDERS:
             x1, y1 = holder[0]
             x2, y2 = holder[1]
             if (
@@ -164,12 +142,11 @@ class PathFinder:
     def displayGraph(self):
         board = vis.Board()
         board.drawItems(
-            self.pink_pucks,
-            self.yellow_pucks,
-            self.brown_pucks,
-            self.cherries,
             self.bot,
             self.enemy_bot,
+            pink_pucks=self.pink_pucks,
+            yellow_pucks=self.yellow_pucks,
+            brown_pucks=self.brown_pucks,
         )
         board.drawGraph(self.graph, self.items)
         board.drawPath(self.path)
