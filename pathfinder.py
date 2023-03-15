@@ -64,7 +64,7 @@ class PathFinder:
                 self.cherries.append(
                     (x1 + CHERRY_RADIUS, y1 + CHERRY_RADIUS + i * CHERRY_RADIUS * 2)
                 )
-        # self.randomise()
+        self.randomise()
         self.setItems()
         self.makeGraph()
         self.setPath()
@@ -171,12 +171,19 @@ class PathFinder:
             pairs = {
                 j: node for j, node in enumerate(edges) if not j in path and node != 0
             }
-            next = min(pairs, key=pairs.get)
-            path.append(next)
+            try:
+                next = min(pairs, key=pairs.get)
+                path.append(next)
+            except ValueError:
+                print("No path found")
+                break
         edges = self.graph[next][-(len(self.PLATE_CENTRES) + 1) : -1]
         pairs = {j: node for j, node in enumerate(edges) if not j in path and node != 0}
-        next = min(pairs, key=pairs.get)
-        path.append(next + len(self.items) - (len(self.PLATE_CENTRES) + 1))
+        try:
+            next = min(pairs, key=pairs.get)
+            path.append(next + len(self.items) - (len(self.PLATE_CENTRES) + 1))
+        except ValueError:
+            print("No end path found")
         path = [self.items[i] for i in path]
         return path
 
@@ -197,5 +204,6 @@ if __name__ == "__main__":
         print("No argument given, defaulting to blue")
         blueTeam = True
 
+while True:
     pf = PathFinder(blueTeam)
     pf.displayGraph()
