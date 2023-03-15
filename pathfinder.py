@@ -162,28 +162,39 @@ class PathFinder:
         board.drawPath(self.path)
         board.display()
 
+    def getGreedyPuck(self, node, path):
+        edges = self.graph[node][: -(len(self.PLATE_CENTRES) + 1)]
+        pairs = {j: node for j, node in enumerate(edges) if not j in path and node != 0}
+        try:
+            next = min(pairs, key=pairs.get)
+            return next
+        except ValueError:
+            print("No max path found")
+            return None
+
+    def getGreedyPlate(self, node):
+        edges = self.graph[node][-(len(self.PLATE_CENTRES) + 1) : -1]
+        pairs = {j: node for j, node in enumerate(edges) if node != 0}
+        try:
+            next = min(pairs, key=pairs.get)
+            return next + len(self.items) - (len(self.PLATE_CENTRES) + 1)
+        except ValueError:
+            print("No end path found")
+            return None
+
     def getGreedyPath(self):
         max_depth = min(self.capacity, len(self.free_pucks))
         path = [len(self.items) - 1]
         next = -1
-        for _ in range(max_depth):
-            edges = self.graph[next][: -(len(self.PLATE_CENTRES) + 1)]
-            pairs = {
-                j: node for j, node in enumerate(edges) if not j in path and node != 0
-            }
-            try:
-                next = min(pairs, key=pairs.get)
-                path.append(next)
-            except ValueError:
-                print("No path found")
+        while len(path) < max_depth:
+            next = self.getGreedyPuck(next, path)
+            if next is None:
                 break
-        edges = self.graph[next][-(len(self.PLATE_CENTRES) + 1) : -1]
-        pairs = {j: node for j, node in enumerate(edges) if node != 0}
-        try:
-            next = min(pairs, key=pairs.get)
-            path.append(next + len(self.items) - (len(self.PLATE_CENTRES) + 1))
-        except ValueError:
-            print("No end path found")
+            path.append(next)
+            self.capacity -= 1
+        next = self.getGreedyPlate(next)
+        if next is not None:
+            path.append(next)
         path = [self.items[i] for i in path]
         return path
 
