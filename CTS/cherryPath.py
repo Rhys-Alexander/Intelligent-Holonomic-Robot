@@ -5,13 +5,7 @@ import visualiser as vis
 import numpy as np
 from shapely.geometry import Point, LineString, Polygon
 
-CHERRY_RADIUS = 15
-CHERRY_HOLDERS = [
-    ((985, 0), (1015, 300)),
-    ((985, 2700), (1015, 3000)),
-    ((0, 1350), (30, 1650)),
-    ((1970, 1350), (2000, 1650)),
-]
+CHERRY_BOT_RADIUS = 160
 BOT_RADIUS = 200
 # 2 length tuple, x pos and y pos
 BLUE_START_CENTRE = (225, 225)
@@ -19,6 +13,25 @@ BLUE_START = ((0, 0), (450, 450))
 GREEN_START_CENTRE = (1775, 225)
 GREEN_START = ((1550, 0), (2000, 450))
 ENEMY_BOT_WEIGHT = 10**8.5
+CHERRY_RADIUS = 15
+CHERRY_HOLDERS = [
+    ((985, 0), (1015, 300)),
+    ((985, 2700), (1015, 3000)),
+    ((0, 1350), (30, 1650)),
+    ((1970, 1350), (2000, 1650)),
+]
+COLLECT = [
+    (965 - CHERRY_BOT_RADIUS, CHERRY_BOT_RADIUS),
+    (35 + CHERRY_BOT_RADIUS, 1500),
+    (1965 - CHERRY_BOT_RADIUS, 1500),
+    (1035 + CHERRY_BOT_RADIUS, 3000 - CHERRY_BOT_RADIUS),
+]
+WAYPOINTS = [
+    (965 - CHERRY_BOT_RADIUS, 300 + CHERRY_BOT_RADIUS),
+    (35 + CHERRY_BOT_RADIUS, 1500),
+    (1965 - CHERRY_BOT_RADIUS, 1500),
+    (1035 + CHERRY_BOT_RADIUS, 2700 - CHERRY_BOT_RADIUS),
+]
 
 # FIXME not efficient and simple enough for the secondary robot
 # TODO make cherry paths more accessible, different algorithm, A*?
@@ -34,8 +47,8 @@ class PathFinder:
         self.enemy_bot = (1775, 225, 90) if blueTeam else (225, 225, 90)
         # lists of tuples, x pos, y pos
         self.cherries = [
-            (1000, BOT_RADIUS),
-            (1000, 3000 - BOT_RADIUS),
+            (1000, CHERRY_BOT_RADIUS),
+            (1000, 3000 - CHERRY_BOT_RADIUS),
             (15, 1500),
             (1985, 1500),
         ]
@@ -58,27 +71,22 @@ class PathFinder:
             random.randint(0, 360),
         )
 
-    def setItems(self):
-        cherry_collects = []
-        for x, y in self.cherries:
-            pt1 = (x - BOT_RADIUS - CHERRY_RADIUS * 2, y)
-            pt2 = (x + BOT_RADIUS + CHERRY_RADIUS * 2, y)
-            if 0 <= pt1[0] <= 2000:
-                cherry_collects.append(pt1)
-            if 0 <= pt2[0] <= 2000:
-                cherry_collects.append(pt2)
-        self.cherry_collects = cherry_collects
-        self.items = self.cherry_collects + [self.bot[:2]]
+    def setItems(self, cherries=[0, 1, 2, 3]):
+        self.waypoints = []
+        for i, waypoint in enumerate(WAYPOINTS):
+            if i in cherries:
+                self.waypoints.append(waypoint)
+        self.items = self.waypoints + [self.bot[:2]]
 
     def checkCollision(self, line_ends, obstacle, radius):
-        margin = BOT_RADIUS + radius
+        margin = CHERRY_BOT_RADIUS + radius
         obstacle = Point(*obstacle)
         line = LineString(line_ends)
         if line.distance(obstacle) <= margin:
             return True
 
     def checkCollisions(self, line_ends):
-        margin = BOT_RADIUS * 2
+        margin = CHERRY_BOT_RADIUS + BOT_RADIUS
         obstacle = Point(*self.enemy_bot[:2])
         line = LineString(line_ends)
         if line.distance(obstacle) <= margin:
@@ -90,7 +98,7 @@ class PathFinder:
                 Polygon([(x1, y1), (x2, y1), (x2, y2), (x1, y2)]).distance(
                     LineString(line_ends)
                 )
-                <= BOT_RADIUS
+                <= CHERRY_BOT_RADIUS
             ):
                 return True
 
