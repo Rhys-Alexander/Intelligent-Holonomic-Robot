@@ -13,6 +13,10 @@ POINTS_FOR_DISGUISE = 5
 
 LEGEND = ["Icing", "Cream", "Sponge Cake"]
 
+# TODO get number of cakes that are in plate and account for a maximum of 3 cakes
+# TODO on each of those cakes check if there is red on the cake to get cherries
+# TODO communicate with the basket to get the number of cherries in the basket
+
 
 def getPoints(cakes, cherries, basketCherries):
     points = POINTS_FOR_BASKET

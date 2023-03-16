@@ -20,6 +20,9 @@ GREEN_START_CENTRE = (1775, 225)
 GREEN_START = ((1550, 0), (2000, 450))
 ENEMY_BOT_WEIGHT = 10**8.5
 
+# FIXME not efficient and simple enough for the secondary robot
+# TODO make cherry paths more accessible, different algorithm, A*?
+
 
 class PathFinder:
     def __init__(self, blueTeam):
