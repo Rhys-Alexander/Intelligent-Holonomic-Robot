@@ -101,6 +101,7 @@ class PathFinder:
         free_pucks = [puck for puck in self.all_pucks if puck not in captive_pucks]
         self.free_pucks = free_pucks
         self.captive_pucks = captive_pucks
+        self.other_bots = [self.enemy_bot]
         self.items = self.free_pucks + self.PLATE_CENTRES + [self.bot[:2]]
 
     def checkCollision(self, line_ends, obstacle, radius):
@@ -111,8 +112,9 @@ class PathFinder:
             return True
 
     def checkCollisions(self, line_ends):
-        if self.checkCollision(line_ends, self.enemy_bot, BOT_RADIUS):
-            return True
+        for bot in self.other_bots:
+            if self.checkCollision(line_ends, bot, BOT_RADIUS):
+                return True
         for holder in CHERRY_HOLDERS:
             x1, y1 = holder[0]
             x2, y2 = holder[1]
