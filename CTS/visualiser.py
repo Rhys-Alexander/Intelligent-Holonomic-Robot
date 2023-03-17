@@ -53,7 +53,8 @@ CHERRY_HOLDERS = [
 class Board:
     def __init__(self):
         # Blank board
-        self.board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
+        # self.board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
+        self.board = cv2.imread("CTS/pics/warped.jpeg")
         # Img board
         # self.board = cv2.imread("pics/orthogonal_board.png")
 

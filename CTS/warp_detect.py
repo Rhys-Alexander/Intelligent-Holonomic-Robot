@@ -110,11 +110,11 @@ def getWarpMatrix(frame):
 
 
 # img = cv2.imread("pics/"+"example.jpeg")
-img = cv2.imread("pics/" + "board2.png")
-img = draw(img, True)
+img = cv2.imread("CTS/pics/blue_team.jpeg")
+# img = draw(img, True)
 matrix = getWarpMatrix(img)
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
 # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
-cv2.imwrite("pics/" + "warped.png", img)
+cv2.imwrite("CTS/pics/" + "warped.jpeg", img)
 
 # TODO chop off not on board sections of image after tracking aruco

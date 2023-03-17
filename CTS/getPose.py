@@ -38,6 +38,6 @@ def pose(frame):
     return frame
 
 
-img = cv2.imread("warped.png")
+img = cv2.imread("CTS/pics/warped.jpeg")
 img = pose(img)
-cv2.imwrite("warped.png", img)
+cv2.imwrite("CTS/pics/warped.jpeg", img)
