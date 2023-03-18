@@ -135,7 +135,7 @@ class PathFinder:
         self.free_pucks = free_pucks
         self.captive_pucks = captive_pucks
         self.other_bots = [self.enemy_bot]
-        self.cherry_items = self.waypoints + [self.bot[:2]]
+        self.cherry_items = self.waypoints + [self.cherry_bot[:2]]
         self.items = self.free_pucks + self.PLATE_CENTRES + [self.bot[:2]]
 
     def checkCollision(self, line_ends, obstacle, bot_radius, radius):
@@ -145,8 +145,8 @@ class PathFinder:
         if line.distance(obstacle) <= margin:
             return True
 
-    def checkCollisions(self, line_ends, bot_radius):
-        for bot in self.other_bots:
+    def checkCollisions(self, line_ends, bot_radius, other_bots):
+        for bot in other_bots:
             if self.checkCollision(line_ends, bot, bot_radius, BOT_RADIUS):
                 return True
         for holder in CHERRY_HOLDERS:
@@ -165,7 +165,7 @@ class PathFinder:
         for i, item in enumerate(self.items[: -(len(self.PLATE_CENTRES) + 1)]):
             for j, item2 in enumerate(self.items[i + 1 :]):
                 # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
-                if not self.checkCollisions([item, item2], BOT_RADIUS):
+                if not self.checkCollisions([item, item2], BOT_RADIUS, self.other_bots):
                     graph[i, j + i + 1] = graph[j + i + 1, i] = (
                         math.dist(item, item2)
                         + 1
@@ -186,7 +186,9 @@ class PathFinder:
         for i, item in enumerate(self.cherry_items[:-1]):
             for j, item2 in enumerate(self.cherry_items[i + 1 :]):
                 # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
-                if not self.checkCollisions([item, item2], CHERRY_BOT_RADIUS):
+                if not self.checkCollisions(
+                    [item, item2], CHERRY_BOT_RADIUS, self.other_bots + [self.bot]
+                ):
                     graph[i, j + i + 1] = graph[j + i + 1, i] = (
                         math.dist(item, item2)
                         + 1
@@ -214,9 +216,9 @@ class PathFinder:
             cherries=self.cherries,
         )
         board.drawGraph(self.bot_graph, self.items)
-        # board.drawGraph(self.cherry_graph, self.cherry_items)
+        board.drawGraph(self.cherry_graph, self.cherry_items)
         board.drawPath(self.bot_path)
-        # board.drawPath(self.cherry_path)
+        board.drawPath(self.cherry_path)
         board.display()
 
     def getPuck(self, node, path):
@@ -231,9 +233,7 @@ class PathFinder:
 
     def getPlate(self, node):
         edges = self.bot_graph[node][-len(self.PLATE_CENTRES + [self.bot[:2]]) : -1]
-        print(self.bot_graph)
         pairs = {j: node for j, node in enumerate(edges) if node != 0}
-        print(pairs)
         try:
             next = min(pairs, key=pairs.get)
             return next + len(self.items) - len(self.PLATE_CENTRES + [self.bot[:2]])
