@@ -26,6 +26,8 @@ PATH_THICKNESS = 10
 # Integer Radiuses
 PUCK_RADIUS = 60
 BOT_RADIUS = 200
+CHERRY_BOT_RADIUS = 160
+
 # 2 length tuple, x pos and y pos
 BLUE_START = ((0, 0), (450, 450))
 GREEN_START = ((1550, 0), (2000, 450))
@@ -53,8 +55,8 @@ CHERRY_HOLDERS = [
 class Board:
     def __init__(self):
         # Blank board
-        # self.board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
-        self.board = cv2.imread("CTS/pics/warped.jpeg")
+        self.board = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
+        # self.board = cv2.imread("CTS/pics/warped.jpeg")
         # Img board
         # self.board = cv2.imread("pics/orthogonal_board.png")
 
@@ -106,10 +108,31 @@ class Board:
             thickness=ITEM_THICKNESS,
         )
 
+    def drawBot(self, bot, colour, radius):
+        x, y, rot = bot
+        cv2.circle(
+            self.board,
+            center=(x, y),
+            radius=radius,
+            color=colour,
+            thickness=BOT_THICKNESS,
+        )
+        cv2.line(
+            self.board,
+            pt1=(x, y),
+            pt2=(
+                math.ceil(x + radius * np.cos(np.radians(rot))),
+                math.ceil(y + radius * np.sin(np.radians(rot))),
+            ),
+            color=colour,
+            thickness=BOT_THICKNESS,
+        )
+
     def drawItems(
         self,
-        my_bot,
-        enemy_bot,
+        bot,
+        cherry_bot,
+        enemy_bots,
         pink_pucks=False,
         yellow_pucks=False,
         brown_pucks=False,
@@ -127,25 +150,10 @@ class Board:
             for cherry in cherries:
                 self.drawCherry(cherry)
 
-        for bot, colour in ((my_bot, RED), (enemy_bot, GRAY)):
-            x, y, rot = bot
-            cv2.circle(
-                self.board,
-                center=(x, y),
-                radius=BOT_RADIUS,
-                color=colour,
-                thickness=BOT_THICKNESS,
-            )
-            cv2.line(
-                self.board,
-                pt1=(x, y),
-                pt2=(
-                    math.ceil(x + BOT_RADIUS * np.cos(np.radians(rot))),
-                    math.ceil(y + BOT_RADIUS * np.sin(np.radians(rot))),
-                ),
-                color=colour,
-                thickness=BOT_THICKNESS,
-            )
+        self.drawBot(cherry_bot, RED, CHERRY_BOT_RADIUS)
+        self.drawBot(bot, RED, BOT_RADIUS)
+        for bot in enemy_bots:
+            self.drawBot(bot, GRAY, BOT_RADIUS)
 
     def drawGraph(self, graph, nodes):
         for i, row in enumerate(graph):
