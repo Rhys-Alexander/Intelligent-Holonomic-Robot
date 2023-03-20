@@ -33,19 +33,11 @@ def pose(frame):
     if len(corners) > 0:
         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
         for markerCorner, id in zip(corners, ids):
-            if id in [47, 13, 36]:
-                success, rvec, tvec = cv2.solvePnP(
-                    points_3D, markerCorner, cameraMatrix, distCoeffs
-                )
-                tl, tr, br, bl = markerCorner.reshape((4, 2))
-                x = int((tl[0] + br[0]) / 2.0)
-                y = int((tl[1] + br[1]) / 2.0)
-                c = centroid(LineString([br, bl]))
-                x2, y2 = int(c.x), int(c.y)
-                x_new, y_new = x + 2 * (x - x2), y + 2 * (y - y2)
+            success, rvec, tvec = cv2.solvePnP(
+                points_3D, markerCorner, cameraMatrix, distCoeffs
+            )
 
-                cv2.drawFrameAxes(frame, cameraMatrix, distCoeffs, rvec, tvec, 1000)
-                cv2.circle(frame, (int(x_new), int(y_new)), 5, (0, 0, 255), 20)
+            cv2.drawFrameAxes(frame, cameraMatrix, distCoeffs, rvec, tvec, 1000)
 
     return frame
 
