@@ -77,39 +77,6 @@ def camera_compensation(x_coordinate, y_coordinate):
     return int(x_compensated), int(y_compensated)
 
 
-def getObjectCoods(hsv, frame, hsvColor):
-    hsvVal, bgr, prec, kernelSize, sortFunc = hsvColor
-    coods = []
-    hsvVal = [int(hsvVal[0] / 2)] + [int(v / 100 * 255) for v in hsvVal[1:]]
-    low = np.array([v - prec if v > prec else 0 for v in hsvVal])
-    upp = np.array([v + prec if v < 255 - prec else 255 for v in hsvVal])
-    mask = cv2.inRange(hsv, low, upp)
-    kernel = np.ones(kernelSize, np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
-    for i in sortFunc(contours):
-        M = cv2.moments(i)
-        if M["m00"] != 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-            coods.append((cx, cy))
-            cv2.drawContours(frame, [i], -1, bgr, 4)
-    return coods
-
-
-def draw(frame, gray=False):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    if gray:
-        frame = cv2.cvtColor(
-            cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR
-        )
-    for color in HSVCOLORS:
-        for p in getObjectCoods(hsv, frame, color):
-            cv2.circle(frame, p, 10, color[1], -1)
-    return frame
-
-
 def getWarpMatrix(frame):
     grid = [0] * 4
     corners, ids, _ = DETECTOR.detectMarkers(frame)
@@ -160,8 +127,13 @@ def getPucks(frame):
 
 
 img = cv2.imread("CTS/pics/green_bot.jpeg")
-# img = draw(img, True)
-matrix = getWarpMatrix(img)
+while True:
+    try:
+        matrix = getWarpMatrix(img)
+        break
+    except cv2.error:
+        print("no aruco")
+        pass
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
 getPucks(img)
 # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
