@@ -10,6 +10,7 @@ WIDTH, HEIGHT = BWIDTH, BHEIGHT
 W_SEG, H_SEG = 0, 0
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
+BOT_HEIGHT = 430
 
 MAX_CHERRY_CONTOUR = 500
 MIN_PUCK_CONTOUR = 1500
@@ -51,6 +52,27 @@ HSVCOLORS = (
         CHERRY_SORT,
     ),  # red
 )
+
+# todo understand this
+def camera_compensation(x_coordinate, y_coordinate):
+    camera_position = [1100, 500, 1500]  # x,y,z coordinate from origin in mm
+    # add 300 to move orgin to under the camera
+    offset = 100000
+    x_coordinate = (offset - x_coordinate) + (camera_position[0] - offset)
+
+    # perform compensation
+    x_compensated = x_coordinate - (BOT_HEIGHT / (camera_position[2] / x_coordinate))
+    # if y_coordinate < camera_position[1]:
+    y_compensated = y_coordinate - (BOT_HEIGHT / (camera_position[2] / y_coordinate))
+    # else:
+    #     y_compensated = y_coordinate + (
+    #         BOT_HEIGHT / (camera_position[2] / y_coordinate)
+    #     )
+    # substract the offset
+    x_compensated = offset - (x_compensated - (camera_position[0] - offset))
+    print(x_compensated, y_compensated)
+
+    return int(x_compensated), int(y_compensated)
 
 
 def getObjectCoods(hsv, frame, hsvColor):
@@ -95,7 +117,7 @@ def getWarpMatrix(frame):
             tl, _, br, _ = markerCorner.reshape((4, 2))
             cX = int((tl[0] + br[0]) / 2.0)
             cY = int((tl[1] + br[1]) / 2.0)
-            if markerID in [20, 21, 22, 23]:
+            if markerID in range(20, 24):
                 grid[markerID % 20] = (cX, cY)
     pts1 = np.float32(grid)
     pts2 = np.float32(
@@ -109,8 +131,7 @@ def getWarpMatrix(frame):
     return cv2.getPerspectiveTransform(pts1, pts2)
 
 
-# img = cv2.imread("pics/"+"example.jpeg")
-img = cv2.imread("CTS/pics/blue_team.jpeg")
+img = cv2.imread("CTS/pics/green_bot.jpeg")
 # img = draw(img, True)
 matrix = getWarpMatrix(img)
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
