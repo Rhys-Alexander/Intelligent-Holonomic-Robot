@@ -67,7 +67,8 @@ def camera_compensation(x, y, frame):
     return x, y
 
 
-def getWarpMatrix(frame):
+def getMatrixAndBots(frame):
+    bots = []
     grid = [0] * 4
     corners, ids, _ = DETECTOR.detectMarkers(frame)
     if len(corners) > 0:
@@ -76,7 +77,9 @@ def getWarpMatrix(frame):
             tl, _, br, _ = markerCorner.reshape((4, 2))
             cX = int((tl[0] + br[0]) / 2.0)
             cY = int((tl[1] + br[1]) / 2.0)
-            if markerID in range(20, 24):
+            if markerID in range(1, 11):
+                bots.append((cX, cY))
+            elif markerID in range(20, 24):
                 grid[markerID % 20] = (cX, cY)
     pts1 = np.float32(grid)
     pts2 = np.float32(
@@ -87,27 +90,29 @@ def getWarpMatrix(frame):
             [W_SEG + BWIDTH - BW_SEG * 2, H_SEG + BH_SEG * 4],
         ]
     )
-    return cv2.getPerspectiveTransform(pts1, pts2)
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+    if bots:
+        bots = cv2.perspectiveTransform(np.float32([bots]), matrix)
+    return matrix, bots
 
 
-def getItems(frame):
+def getItems(frame, uncomp_bots):
+    bots = []
+    for bot in uncomp_bots:
+        x, y = camera_compensation(int(bot[0][0]), int(bot[0][1]), frame)
+        cv2.circle(frame, (x, y), 5, (0, 0, 255), 20)
+        bots.append((x, y))
     corners, ids, _ = DETECTOR.detectMarkers(frame)
     if not len(corners) > 0:
         return frame
     pink = []
     yellow = []
     brown = []
-    bots = []
     for markerCorner, id in zip(corners, ids):
         tl, _, br, bl = markerCorner.reshape((4, 2))
         x = int((tl[0] + br[0]) / 2.0)
         y = int((tl[1] + br[1]) / 2.0)
-        if id in range(1, 11):
-            x, y = camera_compensation(x, y, frame)
-            cv2.circle(frame, (x, y), 5, (0, 0, 255), 20)
-            bots.append((x, y))
-            continue
-        elif id in [47, 13, 36]:
+        if id in [47, 13, 36]:
             c = shapely.centroid(LineString([br, bl]))
             x2, y2 = int(c.x), int(c.y)
             x_new, y_new = x + 2 * (x - x2), y + 2 * (y - y2)
@@ -124,14 +129,12 @@ def getItems(frame):
 img = cv2.imread("CTS/pics/green_bot.jpeg")
 while True:
     try:
-        matrix = getWarpMatrix(img)
+        matrix, bots = getMatrixAndBots(img)
         break
     except cv2.error:
         print("no aruco")
         pass
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
-getItems(img)
+getItems(img, bots)
 # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
 cv2.imwrite("CTS/pics/" + "warped.jpeg", img)
-
-# TODO chop off not on board sections of image after tracking aruco
