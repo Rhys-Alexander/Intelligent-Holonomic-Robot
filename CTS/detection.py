@@ -4,58 +4,12 @@ from shapely.geometry import LineString
 import shapely
 
 DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
-BWIDTH, BHEIGHT = 2000, 3000
-BW_SEG, BH_SEG = BWIDTH / 7, BHEIGHT / 5
-# WIDTH, HEIGHT = int(BWIDTH * 1.2), int(BHEIGHT * 1.2)
-WIDTH, HEIGHT = BWIDTH, BHEIGHT
-# W_SEG, H_SEG = WIDTH / 12, HEIGHT / 12
-W_SEG, H_SEG = 0, 0
+WIDTH, HEIGHT = 2000, 3000
+CODE_X_OFFSET, CODE_Y_OFFSET = 570, 575
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
 BOT_HEIGHT = 430
 CAM_POS = (1100, -100, 1400)
-
-
-MAX_CHERRY_CONTOUR = 500
-MIN_PUCK_CONTOUR = 1500
-
-PUCK_SORT = lambda y: sorted(
-    filter(lambda x: cv2.contourArea(x) > MIN_PUCK_CONTOUR, y),
-    key=cv2.contourArea,
-    reverse=True,
-)[:12]
-CHERRY_SORT = lambda y: filter(lambda x: cv2.contourArea(x) < MAX_CHERRY_CONTOUR, y)
-
-HSVCOLORS = (
-    (
-        (15, 53, 24),
-        (0, 100, 255),
-        45,
-        (20, 20),
-        PUCK_SORT,
-    ),  # brown
-    (
-        (333, 60, 60),
-        (230, 0, 255),
-        45,
-        (20, 20),
-        PUCK_SORT,
-    ),  # pink
-    (
-        (40, 80, 80),
-        (0, 255, 255),
-        45,
-        (20, 20),
-        PUCK_SORT,
-    ),  # yellow
-    (
-        (6, 76, 71),
-        (0, 0, 255),
-        25,
-        (3, 3),
-        CHERRY_SORT,
-    ),  # red
-)
 
 
 def camera_compensation(x, y, frame):
@@ -84,10 +38,10 @@ def getMatrixAndBots(frame):
     pts1 = np.float32(grid)
     pts2 = np.float32(
         [
-            [W_SEG + BW_SEG * 2, H_SEG + BH_SEG],
-            [W_SEG + BWIDTH - BW_SEG * 2, H_SEG + BH_SEG],
-            [W_SEG + BW_SEG * 2, H_SEG + BH_SEG * 4],
-            [W_SEG + BWIDTH - BW_SEG * 2, H_SEG + BH_SEG * 4],
+            [CODE_X_OFFSET, CODE_Y_OFFSET],
+            [WIDTH - CODE_X_OFFSET, CODE_Y_OFFSET],
+            [CODE_X_OFFSET, HEIGHT - CODE_Y_OFFSET],
+            [WIDTH - CODE_X_OFFSET, HEIGHT - CODE_Y_OFFSET],
         ]
     )
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
@@ -136,5 +90,4 @@ while True:
         pass
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
 getItems(img, bots)
-# print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
-cv2.imwrite("CTS/pics/" + "warped.jpeg", img)
+cv2.imwrite("CTS/pics/warped.jpeg", img)
