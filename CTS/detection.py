@@ -9,13 +9,14 @@ CODE_X_OFFSET, CODE_Y_OFFSET = 570, 575
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
 BOT_HEIGHT = 430
+PUCK_HEIGHT = 20
 CAM_POS = (1100, -100, 1400)
 
 
-def camera_compensation(x, y, frame):
+def camera_compensation(x, y, frame, height):
     line = LineString((CAM_POS[:2], (x, y)))
     cv2.line(frame, (int(CAM_POS[0]), int(CAM_POS[1])), (x, y), (0, 0, 255), 2)
-    distance = line.length - BOT_HEIGHT / (CAM_POS[2] / line.length)
+    distance = line.length - height / (CAM_POS[2] / line.length)
     actual_pos = line.interpolate(distance)
     x, y = int(actual_pos.x), int(actual_pos.y)
     return x, y
@@ -53,7 +54,7 @@ def getMatrixAndBots(frame):
 def getItems(frame, uncomp_bots):
     bots = []
     for bot in uncomp_bots:
-        x, y = camera_compensation(int(bot[0][0]), int(bot[0][1]), frame)
+        x, y = camera_compensation(int(bot[0][0]), int(bot[0][1]), frame, BOT_HEIGHT)
         cv2.circle(frame, (x, y), 5, (0, 0, 255), 20)
         bots.append((x, y))
     corners, ids, _ = DETECTOR.detectMarkers(frame)
@@ -69,14 +70,16 @@ def getItems(frame, uncomp_bots):
         if id in [47, 13, 36]:
             c = shapely.centroid(LineString([br, bl]))
             x2, y2 = int(c.x), int(c.y)
-            x_new, y_new = x + 2 * (x - x2), y + 2 * (y - y2)
-            cv2.circle(frame, (x_new, y_new), 5, (0, 0, 255), 20)
+            x, y = x + 2 * (x - x2), y + 2 * (y - y2)
+            cv2.circle(frame, (x, y), 5, (0, 0, 255), 20)
+            x, y = camera_compensation(x, y, frame, PUCK_HEIGHT * 2)
+            cv2.circle(frame, (x, y), 5, (0, 255, 0), 10)
             if id == 47:
-                pink.append((x_new, y_new))
+                pink.append((x, y))
             elif id == 13:
-                yellow.append((x_new, y_new))
+                yellow.append((x, y))
             else:
-                brown.append((x_new, y_new))
+                brown.append((x, y))
     return (pink, yellow, brown, bots)
 
 
