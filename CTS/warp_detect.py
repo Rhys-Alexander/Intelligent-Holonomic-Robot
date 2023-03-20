@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from shapely.geometry import LineString
+import shapely
 
 DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
 BWIDTH, BHEIGHT = 2000, 3000
@@ -131,10 +133,37 @@ def getWarpMatrix(frame):
     return cv2.getPerspectiveTransform(pts1, pts2)
 
 
+def getPucks(frame):
+    corners, ids, _ = DETECTOR.detectMarkers(frame)
+    if not len(corners) > 0:
+        return frame
+    pink = []
+    yellow = []
+    brown = []
+    for markerCorner, id in zip(corners, ids):
+        if not id in [47, 13, 36]:
+            continue
+        tl, _, br, bl = markerCorner.reshape((4, 2))
+        x = int((tl[0] + br[0]) / 2.0)
+        y = int((tl[1] + br[1]) / 2.0)
+        c = shapely.centroid(LineString([br, bl]))
+        x2, y2 = int(c.x), int(c.y)
+        x_new, y_new = x + 2 * (x - x2), y + 2 * (y - y2)
+        cv2.circle(frame, (x_new, y_new), 5, (0, 0, 255), 20)
+        if id == 47:
+            pink.append((x_new, y_new))
+        elif id == 13:
+            yellow.append((x_new, y_new))
+        else:
+            brown.append((x_new, y_new))
+    return (pink, yellow, brown)
+
+
 img = cv2.imread("CTS/pics/green_bot.jpeg")
 # img = draw(img, True)
 matrix = getWarpMatrix(img)
 img = cv2.warpPerspective(img, matrix, (WIDTH, HEIGHT))
+getPucks(img)
 # print(cv2.perspectiveTransform(np.float32([grid]), matrix)) # tranforms grid to new grid
 cv2.imwrite("CTS/pics/" + "warped.jpeg", img)
 
