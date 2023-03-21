@@ -10,7 +10,8 @@ PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
 BOT_HEIGHT = 430
 PUCK_HEIGHT = 20
-CAM_POS = (1100, -100, 1400)
+blueTeam = True
+CAM_POS = (900, -200, 1500) if blueTeam else (1100, -200, 1500)
 
 
 def camera_compensation(x, y, frame, height):
@@ -47,14 +48,14 @@ def getMatrixAndBots(frame):
     )
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     if bots:
-        bots = cv2.perspectiveTransform(np.float32([bots]), matrix)
+        bots = cv2.perspectiveTransform(np.float32([bots]), matrix)[0]
     return matrix, bots
 
 
 def getItems(frame, uncomp_bots):
     bots = []
     for bot in uncomp_bots:
-        x, y = camera_compensation(int(bot[0][0]), int(bot[0][1]), frame, BOT_HEIGHT)
+        x, y = camera_compensation(int(bot[0]), int(bot[1]), frame, BOT_HEIGHT)
         cv2.circle(frame, (x, y), 5, (0, 0, 255), 20)
         bots.append((x, y))
     corners, ids, _ = DETECTOR.detectMarkers(frame)
@@ -83,7 +84,7 @@ def getItems(frame, uncomp_bots):
     return (pink, yellow, brown, bots)
 
 
-img = cv2.imread("CTS/pics/green_bot.jpeg")
+img = cv2.imread("CTS/pics/multi_bots.jpeg")
 while True:
     try:
         matrix, bots = getMatrixAndBots(img)
