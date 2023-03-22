@@ -163,8 +163,8 @@ class PathFinder:
                     )
         self.cherry_graph = graph
 
-    def displayGraph(self):
-        board = vis.Board()
+    def displayGraph(self, img):
+        board = vis.Board(img)
         board.drawItems(
             self.bot,
             self.cherry_bot,
