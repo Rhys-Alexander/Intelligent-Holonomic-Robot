@@ -1,4 +1,3 @@
-import sys
 import math
 import visualiser as vis
 
@@ -66,63 +65,23 @@ class PathFinder:
         self.PLATE_CENTRES = BLUE_PLATE_CENTRES if blueTeam else GREEN_PLATE_CENTRES
         self.plates = BLUE_PLATES if blueTeam else GREEN_PLATES
         self.blueTeam = blueTeam
-        # tuple, x pos, y pos, rotation
-        self.bot = (225, 225, 90) if blueTeam else (1775, 225, 90)
-        self.cherry_bot = (
-            (225 + BOT_RADIUS + CHERRY_BOT_RADIUS + 30, 225, 90)
-            if blueTeam
-            else (1775 - BOT_RADIUS - CHERRY_BOT_RADIUS - 30, 225, 90)
-        )
-        self.enemy_bot = (1775, 225, 90) if blueTeam else (225, 225, 90)
-        # lists of tuples, x pos, y pos
-        self.pink_pucks = [(225, 575), (1775, 575), (225, 2425), (1775, 2425)]
-        self.yellow_pucks = [(225, 775), (1775, 775), (225, 2225), (1775, 2225)]
-        self.brown_pucks = [(725, 1125), (1275, 1125), (725, 1875), (1275, 1875)]
-        self.cherries = [
-            (1000, CHERRY_BOT_RADIUS),
-            (1000, 3000 - CHERRY_BOT_RADIUS),
-            (15, 1500),
-            (1985, 1500),
-        ]
-        self.enemy_bots = [self.enemy_bot]
-        # self.randomise()
-        self.setItems()
+
+    def update(self, pucks, bot, cherryBot, enemyBots, cherries):
+        self.setItems(pucks, bot, cherryBot, enemyBots, cherries)
         self.makeBotGraph()
         self.makeCherryGraph()
         self.setPaths()
 
-    def randomise(self):
-        import random
-
-        self.pink_pucks = [
-            (random.randint(200, 2000), random.randint(200, 3000))
-            for _ in self.pink_pucks
-        ]
-        self.yellow_pucks = [
-            (random.randint(200, 2000), random.randint(200, 3000))
-            for _ in self.yellow_pucks
-        ]
-        self.brown_pucks = [
-            (random.randint(200, 2000), random.randint(200, 3000))
-            for _ in self.brown_pucks
-        ]
-        self.enemy_bot = (
-            random.randint(200, 2000),
-            random.randint(200, 3000),
-            random.randint(0, 360),
-        )
-        self.bot = (
-            random.randint(200, 2000),
-            random.randint(200, 3000),
-            random.randint(0, 360),
-        )
-
-    def setItems(self):
-        # TODO update items, pucks, bots, cherries
+    def setItems(self, pucks, bot, cherryBot, enemyBots, cherries):
+        self.pucks = pucks
+        self.bot = bot
+        self.cherry_bot = cherryBot
+        self.enemy_bots = enemyBots
+        self.cherries = cherries
         self.waypoints = CHERRY_WAYPOINTS
-        self.all_pucks = self.pink_pucks + self.yellow_pucks + self.brown_pucks
+
         captive_pucks = []
-        for puck in self.all_pucks:
+        for puck in self.pucks:
             for plate in self.plates + [self.enemy_platter]:
                 p1x, p1y = plate[0]
                 p2x, p2y = plate[1]
@@ -131,10 +90,10 @@ class PathFinder:
                     and p1y - PUCK_RADIUS <= puck[1] <= p2y + PUCK_RADIUS
                 ):
                     captive_pucks.append(puck)
-        free_pucks = [puck for puck in self.all_pucks if puck not in captive_pucks]
+        free_pucks = [puck for puck in self.pucks if puck not in captive_pucks]
         self.free_pucks = free_pucks
         self.captive_pucks = captive_pucks
-        self.other_bots = [self.enemy_bot]
+
         self.cherry_items = self.waypoints + [self.cherry_bot[:2]]
         self.items = self.free_pucks + self.PLATE_CENTRES + [self.bot[:2]]
 
@@ -165,7 +124,7 @@ class PathFinder:
         for i, item in enumerate(self.items[: -(len(self.PLATE_CENTRES) + 1)]):
             for j, item2 in enumerate(self.items[i + 1 :]):
                 # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
-                if not self.checkCollisions([item, item2], BOT_RADIUS, self.other_bots):
+                if not self.checkCollisions([item, item2], BOT_RADIUS, self.enemy_bots):
                     graph[i, j + i + 1] = graph[j + i + 1, i] = (
                         math.dist(item, item2)
                         + 1
@@ -176,7 +135,7 @@ class PathFinder:
                                 (LineString([item, item2]).distance(Point(bot))) ** 2
                                 + 1
                             )
-                            for bot in self.other_bots
+                            for bot in self.enemy_bots
                         )
                     )
         self.bot_graph = graph
@@ -187,7 +146,7 @@ class PathFinder:
             for j, item2 in enumerate(self.cherry_items[i + 1 :]):
                 # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
                 if not self.checkCollisions(
-                    [item, item2], CHERRY_BOT_RADIUS, self.other_bots + [self.bot]
+                    [item, item2], CHERRY_BOT_RADIUS, self.enemy_bots + [self.bot]
                 ):
                     graph[i, j + i + 1] = graph[j + i + 1, i] = (
                         math.dist(item, item2)
@@ -199,7 +158,7 @@ class PathFinder:
                                 (LineString([item, item2]).distance(Point(bot))) ** 2
                                 + 1
                             )
-                            for bot in self.other_bots + [self.bot]
+                            for bot in self.enemy_bots + [self.bot]
                         )
                     )
         self.cherry_graph = graph
@@ -209,10 +168,8 @@ class PathFinder:
         board.drawItems(
             self.bot,
             self.cherry_bot,
-            [self.enemy_bot],
-            pink_pucks=self.pink_pucks,
-            yellow_pucks=self.yellow_pucks,
-            brown_pucks=self.brown_pucks,
+            self.enemy_bots,
+            pucks=self.pucks,
             cherries=self.cherries,
         )
         board.drawGraph(self.bot_graph, self.items)
@@ -276,24 +233,6 @@ class PathFinder:
     def setPaths(self):
         self.bot_path = self.getBotPath()
         self.cherry_path = self.getCherryPath()
-
-
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "green":
-            blueTeam = False
-        elif sys.argv[1] == "blue":
-            blueTeam = True
-        else:
-            print("Invalid argument, use green or blue")
-            exit()
-    else:
-        print("No argument given, defaulting to blue")
-        blueTeam = True
-
-while True:
-    pf = PathFinder(blueTeam)
-    pf.displayGraph()
 
 
 # FIXME not efficient and simple enough for the secondary robot

@@ -52,6 +52,7 @@ class Detector:
         )
         return cv2.getPerspectiveTransform(pts1, pts2)
 
+    # TODO get each bot's orientation and which bot is which
     def setBots(self):
         bots = []
         corners, ids, _ = DETECTOR.detectMarkers(self.frame)
