@@ -52,7 +52,7 @@ class Detector:
         )
         return cv2.getPerspectiveTransform(pts1, pts2)
 
-    # TODO get each bot's orientation and which bot is which
+    # TODO get which bot is which
     def setBots(self):
         bots = []
         corners, ids, _ = DETECTOR.detectMarkers(self.frame)
@@ -65,10 +65,11 @@ class Detector:
             bots.append((cX, cY))
         if bots:
             og_bots = cv2.perspectiveTransform(np.float32([bots]), self.matrix)[0]
-            self.bots = [
-                self.camera_compensation(int(bot[0]), int(bot[1]), BOT_HEIGHT)
-                for bot in og_bots
-            ]
+            self.bots = []
+            for bot in og_bots:
+                x, y = self.camera_compensation(int(bot[0]), int(bot[1]), BOT_HEIGHT)
+                # TODO get orientation
+                self.bots.append((x, y, 90))
 
     def setPucks(self):
         pucks = []
@@ -88,4 +89,4 @@ class Detector:
         self.warped_frame = cv2.warpPerspective(frame, self.matrix, (WIDTH, HEIGHT))
         self.setBots()
         self.setPucks()
-        return self.bots, self.pucks, frame
+        return self.bots, self.pucks, self.warped_frame
