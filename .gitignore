@@ -1,3 +1,5 @@
 /.DS_Store
 CTS/.DS_Store
-CTS/pics/.DS_Store
+CTS/input_pics/.DS_Store
+CTS/output_pics/.DS_Store
+CTS/__pycache__
