@@ -88,13 +88,13 @@ class Board:
             thickness=BOARD_THICKNESS,
         )
 
-    def drawPuck(self, pt, colour):
+    def drawPuck(self, pt):
         x, y = pt
         cv2.circle(
             self.board,
             center=(x, y),
             radius=PUCK_RADIUS,
-            color=colour,
+            color=RED,
             thickness=ITEM_THICKNESS,
         )
 
@@ -133,18 +133,12 @@ class Board:
         bot,
         cherry_bot,
         enemy_bots,
-        pink_pucks=False,
-        yellow_pucks=False,
-        brown_pucks=False,
+        pucks=False,
         cherries=False,
     ):
         self.board = self.blank_state.copy()
-        for pucks, colour in zip(
-            (pink_pucks, yellow_pucks, brown_pucks), (PINK, YELLOW, BROWN)
-        ):
-            if pucks:
-                for puck in pucks:
-                    self.drawPuck(puck, colour)
+        for puck in pucks:
+            self.drawPuck(puck)
 
         if cherries:
             for cherry in cherries:
