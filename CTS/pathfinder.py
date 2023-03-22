@@ -53,20 +53,19 @@ CHERRY_WAYPOINTS = [
     (1035 + CHERRY_BOT_RADIUS, 2700 - CHERRY_BOT_RADIUS),
 ]
 
-MAX_CAPACITY = 18
 ENEMY_BOT_WEIGHT = 10**8.5
 
 
 class PathFinder:
     def __init__(self, blueTeam):
-        self.capacity = MAX_CAPACITY
         self.platter = BLUE_START_CENTRE if blueTeam else GREEN_START_CENTRE
         self.enemy_platter = GREEN_START if blueTeam else BLUE_START
         self.PLATE_CENTRES = BLUE_PLATE_CENTRES if blueTeam else GREEN_PLATE_CENTRES
         self.plates = BLUE_PLATES if blueTeam else GREEN_PLATES
         self.blueTeam = blueTeam
 
-    def update(self, pucks, bot, cherryBot, enemyBots, cherries):
+    def update(self, pucks, bot, cherryBot, enemyBots, cherries, capacity):
+        self.capacity = capacity
         self.setItems(pucks, bot, cherryBot, enemyBots, cherries)
         self.makeBotGraph()
         self.makeCherryGraph()
@@ -120,50 +119,57 @@ class PathFinder:
                 return True
 
     def makeBotGraph(self):
-        graph = np.zeros((len(self.items), len(self.items)))
-        for i, item in enumerate(self.items[: -(len(self.PLATE_CENTRES) + 1)]):
-            for j, item2 in enumerate(self.items[i + 1 :]):
-                # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
-                if not self.checkCollisions([item, item2], BOT_RADIUS, self.enemy_bots):
-                    graph[i, j + i + 1] = graph[j + i + 1, i] = (
-                        math.dist(item, item2)
-                        + 1
-                        + max(
-                            ENEMY_BOT_WEIGHT
-                            * 1
-                            / (
-                                (LineString([item, item2]).distance(Point(bot))) ** 2
-                                + 1
-                            )
-                            for bot in self.enemy_bots
+        graph = np.zeros((len(self.items) - 1))
+        for i, item in enumerate(self.items[:-1]):
+            # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
+            if not self.checkCollisions(
+                [item, self.bot[:2]], BOT_RADIUS, self.enemy_bots
+            ):
+                graph[i] = (
+                    math.dist(item, self.bot[:2])
+                    + 1
+                    + max(
+                        ENEMY_BOT_WEIGHT
+                        * 1
+                        / (
+                            (LineString([item, self.bot[:2]]).distance(Point(bot))) ** 2
+                            + 1
                         )
+                        for bot in self.enemy_bots
                     )
+                )
         self.bot_graph = graph
 
     def makeCherryGraph(self):
-        graph = np.zeros((len(self.cherry_items), len(self.cherry_items)))
+        graph = np.zeros((len(self.cherry_items) - 1))
         for i, item in enumerate(self.cherry_items[:-1]):
-            for j, item2 in enumerate(self.cherry_items[i + 1 :]):
-                # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
-                if not self.checkCollisions(
-                    [item, item2], CHERRY_BOT_RADIUS, self.enemy_bots + [self.bot]
-                ):
-                    graph[i, j + i + 1] = graph[j + i + 1, i] = (
-                        math.dist(item, item2)
-                        + 1
-                        + max(
-                            ENEMY_BOT_WEIGHT
-                            * 1
-                            / (
-                                (LineString([item, item2]).distance(Point(bot))) ** 2
-                                + 1
+            # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
+            if not self.checkCollisions(
+                [item, self.cherry_bot[:2]],
+                CHERRY_BOT_RADIUS,
+                self.enemy_bots + [self.bot],
+            ):
+                graph[i] = (
+                    math.dist(item, self.cherry_bot[:2])
+                    + 1
+                    + max(
+                        ENEMY_BOT_WEIGHT
+                        * 1
+                        / (
+                            (
+                                LineString([item, self.cherry_bot[:2]]).distance(
+                                    Point(bot)
+                                )
                             )
-                            for bot in self.enemy_bots + [self.bot]
+                            ** 2
+                            + 1
                         )
+                        for bot in self.enemy_bots + [self.bot]
                     )
+                )
         self.cherry_graph = graph
 
-    def displayGraph(self, img):
+    def displayGraph(self, img=False):
         board = vis.Board(img)
         board.drawItems(
             self.bot,
@@ -172,63 +178,47 @@ class PathFinder:
             pucks=self.pucks,
             cherries=self.cherries,
         )
-        board.drawGraph(self.bot_graph, self.items)
-        board.drawGraph(self.cherry_graph, self.cherry_items)
-        board.drawPath(self.bot_path)
-        board.drawPath(self.cherry_path)
+        board.drawGraph(self.bot_graph, self.items, self.bot)
+        board.drawGraph(self.cherry_graph, self.cherry_items, self.cherry_bot)
+        board.drawPath(self.bot_path, self.bot)
+        board.drawPath(self.cherry_path, self.cherry_bot)
         board.display()
 
-    def getPuck(self, node, path):
-        edges = self.bot_graph[node][: -len(self.PLATE_CENTRES + [self.bot[:2]])]
-        pairs = {j: node for j, node in enumerate(edges) if not j in path and node != 0}
-        try:
-            next = min(pairs, key=pairs.get)
-            return next
-        except ValueError:
-            print("No max path found")
-            return None
-
-    def getPlate(self, node):
-        edges = self.bot_graph[node][-len(self.PLATE_CENTRES + [self.bot[:2]]) : -1]
+    def getPuck(self):
+        edges = self.bot_graph[: -len(self.PLATE_CENTRES)]
         pairs = {j: node for j, node in enumerate(edges) if node != 0}
         try:
             next = min(pairs, key=pairs.get)
-            return next + len(self.items) - len(self.PLATE_CENTRES + [self.bot[:2]])
+            return self.items[next]
         except ValueError:
-            print("No end path found")
+            print("No puck found")
+            return None
+
+    def getPlate(self):
+        edges = self.bot_graph[-len(self.PLATE_CENTRES) :]
+        pairs = {j: node for j, node in enumerate(edges) if node != 0}
+        try:
+            next = min(pairs, key=pairs.get)
+            return self.items[next + len(self.items) - len(self.PLATE_CENTRES)]
+        except ValueError:
+            print("No plate found")
             return None
 
     def getBotPath(self):
-        max_depth = min(self.capacity, len(self.free_pucks))
-        path = [len(self.items) - 1]
-        next = -1
-        while len(path) < max_depth:
-            next = self.getPuck(next, path)
-            if next is None:
-                break
-            path.append(next)
-            self.capacity -= 1
-        next = self.getPlate(path[-1])
-        if next is not None:
-            path.append(next)
-        path = [self.items[i] for i in path]
-        return path
+        return (
+            self.getPuck()
+            if self.capacity > 0 and len(self.free_pucks) > 0
+            else self.getPlate()
+        )
 
     def getCherryPath(self):
-        path = [len(self.cherry_items) - 1]
-        next = -1
-        while True:
-            edges = self.cherry_graph[next][:-1]
-            pairs = {
-                j: node for j, node in enumerate(edges) if not j in path and node != 0
-            }
-            try:
-                next = min(pairs, key=pairs.get)
-                path.append(next)
-            except ValueError:
-                print("No max path found")
-                break
-        return [self.cherry_items[i] for i in path]
+        edges = self.cherry_graph[:-1]
+        pairs = {j: node for j, node in enumerate(edges) if node != 0}
+        try:
+            next = min(pairs, key=pairs.get)
+            return self.cherry_items[next]
+        except ValueError:
+            print("No cherry path found")
 
     def setPaths(self):
         self.bot_path = self.getBotPath()

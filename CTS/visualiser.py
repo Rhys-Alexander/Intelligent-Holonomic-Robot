@@ -149,27 +149,25 @@ class Board:
         for bot in enemy_bots:
             self.drawBot(bot, GRAY, BOT_RADIUS)
 
-    def drawGraph(self, graph, nodes):
-        for i, row in enumerate(graph):
-            for j, val in enumerate(row[i + 1 :]):
-                if val:
-                    cv2.line(
-                        self.board,
-                        pt1=nodes[i],
-                        pt2=nodes[i + 1 + j],
-                        color=RED,
-                        thickness=GRAPH_THICKNESS,
-                    )
+    def drawGraph(self, graph, nodes, bot):
+        for i, x in enumerate(graph):
+            if x:
+                cv2.line(
+                    self.board,
+                    pt1=nodes[i],
+                    pt2=bot[:2],
+                    color=RED,
+                    thickness=GRAPH_THICKNESS,
+                )
 
-    def drawPath(self, path):
-        for pt1, pt2 in zip(path, path[1:]):
-            cv2.line(
-                self.board,
-                pt1=pt1,
-                pt2=pt2,
-                color=GREEN,
-                thickness=PATH_THICKNESS,
-            )
+    def drawPath(self, path, bot):
+        cv2.line(
+            self.board,
+            pt1=path,
+            pt2=bot[:2],
+            color=GREEN,
+            thickness=PATH_THICKNESS,
+        )
 
     def display(self):
         cv2.imshow("Board", self.board)
