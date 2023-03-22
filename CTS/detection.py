@@ -34,14 +34,13 @@ class Detector:
     def getMatrix(self, frame):
         grid = [0] * 4
         corners, ids, _ = DETECTOR.detectMarkers(frame)
-        if len(corners) > 0:
-            ids = ids.flatten()
-            for (markerCorner, markerID) in zip(corners, ids):
-                tl, _, br, _ = markerCorner.reshape((4, 2))
-                cX = int((tl[0] + br[0]) / 2.0)
-                cY = int((tl[1] + br[1]) / 2.0)
-                if markerID in range(20, 24):
-                    grid[markerID % 20] = (cX, cY)
+        for (markerCorner, markerID) in zip(corners, ids):
+            if not markerID in range(20, 24):
+                continue
+            tl, _, br, _ = markerCorner.reshape((4, 2))
+            cX = int((tl[0] + br[0]) / 2.0)
+            cY = int((tl[1] + br[1]) / 2.0)
+            grid[markerID[0] % 20] = (cX, cY)
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [
@@ -53,17 +52,16 @@ class Detector:
         )
         return cv2.getPerspectiveTransform(pts1, pts2)
 
-    def setBots(self, frame):
+    def setBots(self):
         bots = []
-        corners, ids, _ = DETECTOR.detectMarkers(frame)
-        if len(corners) > 0:
-            ids = ids.flatten()
-            for (markerCorner, markerID) in zip(corners, ids):
-                tl, _, br, _ = markerCorner.reshape((4, 2))
-                cX = int((tl[0] + br[0]) / 2.0)
-                cY = int((tl[1] + br[1]) / 2.0)
-                if markerID in range(1, 11):
-                    bots.append((cX, cY))
+        corners, ids, _ = DETECTOR.detectMarkers(self.frame)
+        for (markerCorner, markerID) in zip(corners, ids):
+            if not markerID in range(1, 11):
+                continue
+            tl, _, br, _ = markerCorner.reshape((4, 2))
+            cX = int((tl[0] + br[0]) / 2.0)
+            cY = int((tl[1] + br[1]) / 2.0)
+            bots.append((cX, cY))
         if bots:
             og_bots = cv2.perspectiveTransform(np.float32([bots]), self.matrix)[0]
             self.bots = [
@@ -71,30 +69,22 @@ class Detector:
                 for bot in og_bots
             ]
 
-    def setPucks(self, frame):
-        corners, ids, _ = DETECTOR.detectMarkers(frame)
-        if not len(corners) > 0:
-            return frame
+    def setPucks(self):
         pucks = []
+        corners, ids, _ = DETECTOR.detectMarkers(self.warped_frame)
         for markerCorner, id in zip(corners, ids):
+            if not id in [47, 13, 36]:
+                continue
             tl, _, br, bl = markerCorner.reshape((4, 2))
-            x = int((tl[0] + br[0]) / 2.0)
-            y = int((tl[1] + br[1]) / 2.0)
-            if id in [47, 13, 36]:
-                c = shapely.centroid(LineString([br, bl]))
-                x2, y2 = int(c.x), int(c.y)
-                x, y = x + 2 * (x - x2), y + 2 * (y - y2)
-                cv2.circle(frame, (x, y), 5, (0, 0, 255), 20)
-                x, y = self.camera_compensation(x, y, PUCK_HEIGHT * 2)
-                cv2.circle(frame, (x, y), 5, (0, 255, 0), 10)
-                pucks.append((x, y))
+            x, y = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
+            c = shapely.centroid(LineString([br, bl]))
+            x, y = int(x + 2 * (x - c.x)), int(y + 2 * (y - c.y))
+            pucks.append(self.camera_compensation(x, y, PUCK_HEIGHT * 2))
         self.pucks = pucks
 
     def getItems(self, frame):
-        self.setBots(frame)
-        frame = cv2.warpPerspective(frame, self.matrix, (WIDTH, HEIGHT))
-        self.setPucks(frame)
-        for bot in self.bots:
-            cv2.circle(frame, bot, 5, (0, 0, 255), 20)
-        cv2.imwrite("CTS/output_pics/warped.jpeg", frame)
-        return self.bots, self.pucks
+        self.frame = frame
+        self.warped_frame = cv2.warpPerspective(frame, self.matrix, (WIDTH, HEIGHT))
+        self.setBots()
+        self.setPucks()
+        return self.bots, self.pucks, frame
