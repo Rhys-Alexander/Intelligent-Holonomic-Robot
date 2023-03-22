@@ -121,8 +121,8 @@ class Board:
             self.board,
             pt1=(x, y),
             pt2=(
-                math.ceil(x + radius * np.cos(np.radians(rot))),
-                math.ceil(y + radius * np.sin(np.radians(rot))),
+                math.ceil(x + radius * np.cos(rot)),
+                math.ceil(y + radius * np.sin(rot)),
             ),
             color=colour,
             thickness=BOT_THICKNESS,

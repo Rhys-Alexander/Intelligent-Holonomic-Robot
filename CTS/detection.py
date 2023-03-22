@@ -55,21 +55,22 @@ class Detector:
     # TODO get which bot is which
     def setBots(self):
         bots = []
+        rots = []
         corners, ids, _ = DETECTOR.detectMarkers(self.frame)
         for (markerCorner, markerID) in zip(corners, ids):
             if not markerID in range(1, 11):
                 continue
-            tl, _, br, _ = markerCorner.reshape((4, 2))
-            cX = int((tl[0] + br[0]) / 2.0)
-            cY = int((tl[1] + br[1]) / 2.0)
+            tl, _, br, bl = markerCorner.reshape((4, 2))
+            cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
+            rots.append(np.arctan2(bl[1] - br[1], bl[0] - br[0]))
             bots.append((cX, cY))
         if bots:
             og_bots = cv2.perspectiveTransform(np.float32([bots]), self.matrix)[0]
             self.bots = []
-            for bot in og_bots:
+            for bot, rot in zip(og_bots, rots):
+                print(bot, rot)
                 x, y = self.camera_compensation(int(bot[0]), int(bot[1]), BOT_HEIGHT)
-                # TODO get orientation
-                self.bots.append((x, y, 90))
+                self.bots.append((x, y, rot))
 
     def setPucks(self):
         pucks = []
@@ -78,9 +79,9 @@ class Detector:
             if not id in [47, 13, 36]:
                 continue
             tl, _, br, bl = markerCorner.reshape((4, 2))
-            x, y = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
+            cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
             c = shapely.centroid(LineString([br, bl]))
-            x, y = int(x + 2 * (x - c.x)), int(y + 2 * (y - c.y))
+            x, y = int(cX + 2 * (cX - c.x)), int(cY + 2 * (cY - c.y))
             pucks.append(self.camera_compensation(x, y, PUCK_HEIGHT * 2))
         self.pucks = pucks
 
