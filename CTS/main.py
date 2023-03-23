@@ -16,6 +16,12 @@ else:
     print("No argument given, defaulting to blue")
     blueTeam = True
 
+# TODO write start Phase
+# TODO write main phase
+# TODO write steal phase
+# TODO write end phase
+# TODO estimate score at end
+
 
 # Sample Data
 BOT_RADIUS = 200
@@ -48,11 +54,11 @@ capacity = MAX_CAPACITY
 img = cv2.imread("CTS/input_pics/multi_bots.jpeg")
 dtr = dt.Detector(blueTeam=True, img=img)
 pf = pathfinder.PathFinder(blueTeam)
-while True:
-    img = cv2.imread("CTS/input_pics/multi_bots.jpeg")
-    # bots, pucks, img = dtr.getItems(img)
-    # bot = bots[0]
-    # cherry_bot = bots[1]
-    # enemy_bots = bots[2:]
-    pf.update(pucks, bot, cherry_bot, enemy_bots, cherries, capacity)
-    pf.displayGraph()
+# while True:
+img = cv2.imread("CTS/input_pics/multi_bots.jpeg")
+# bots, pucks, img = dtr.getItems(img)
+# bot = bots[0]
+# cherry_bot = bots[1]
+# enemy_bots = bots[2:]
+pf.update(pucks, bot, cherry_bot, enemy_bots, cherries, capacity)
+pf.displayGraph()

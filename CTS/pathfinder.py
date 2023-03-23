@@ -226,4 +226,4 @@ class PathFinder:
 
 
 # FIXME not efficient and simple enough for the secondary robot
-# TODO make cherry paths more accessible, different algorithm, A*?
+# TODO make cherry paths simpler

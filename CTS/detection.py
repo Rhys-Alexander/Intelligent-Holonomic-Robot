@@ -11,6 +11,9 @@ DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
 BOT_HEIGHT = 430
 PUCK_HEIGHT = 20
 
+# TODO ignore pucks if inside robot, check if prob  first
+# TODO figure out which bot is which
+
 
 class Detector:
     def __init__(self, blueTeam, img):
@@ -68,7 +71,6 @@ class Detector:
             og_bots = cv2.perspectiveTransform(np.float32([bots]), self.matrix)[0]
             self.bots = []
             for bot, rot in zip(og_bots, rots):
-                print(bot, rot)
                 x, y = self.camera_compensation(int(bot[0]), int(bot[1]), BOT_HEIGHT)
                 self.bots.append((x, y, rot))
 
