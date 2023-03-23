@@ -22,6 +22,8 @@ else:
 # TODO write end phase
 # TODO estimate score at end
 
+# TODO get image from camera
+
 
 # Sample Data
 BOT_RADIUS = 200
