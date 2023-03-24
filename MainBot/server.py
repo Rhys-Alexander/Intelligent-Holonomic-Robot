@@ -12,10 +12,10 @@ if __name__ == "__main__":
 
     while True:
         data, addr = server.recvfrom(1024)
-        data = data.decode("utf-8")
+        data = data.decode()
 
         print(f"Client: {data}")
 
         data = data.upper()
-        data = data.encode("utf-8")
+        data = data.encode()
         server.sendto(data, addr)
