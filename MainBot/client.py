@@ -1,7 +1,7 @@
 import socket
 
 if __name__ == "__main__":
-    host = "10.42.0.129"
+    host = "10.42.0.1"
     port = 5005
     addr = (host, port)
 
