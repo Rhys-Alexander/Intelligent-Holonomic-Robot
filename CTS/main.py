@@ -2,6 +2,12 @@ import sys
 import pathfinder
 import detection as dt
 import cv2
+import socket
+
+HOST = "10.42.0.1"
+PORT = 5005
+ADDR = (HOST, PORT)
+client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 if len(sys.argv) > 1:
@@ -56,11 +62,19 @@ capacity = MAX_CAPACITY
 img = cv2.imread("CTS/input_pics/multi_bots.jpeg")
 dtr = dt.Detector(blueTeam=True, img=img)
 pf = pathfinder.PathFinder(blueTeam)
-# while True:
-img = cv2.imread("CTS/input_pics/multi_bots.jpeg")
-# bots, pucks, img = dtr.getItems(img)
-# bot = bots[0]
-# cherry_bot = bots[1]
-# enemy_bots = bots[2:]
-pf.update(pucks, bot, cherry_bot, enemy_bots, cherries, capacity)
-pf.displayGraph()
+while True:
+    img = cv2.imread("CTS/input_pics/multi_bots.jpeg")
+    # bots, pucks, img = dtr.getItems(img)
+    # bot = bots[0]
+    # cherry_bot = bots[1]
+    # enemy_bots = bots[2:]
+    data = pf.update(pucks, bot, cherry_bot, enemy_bots, cherries, capacity)
+    data = data.encode()
+    client.sendto(data, ADDR)
+    if data == "!EXIT":
+        print("Disconneted from the server.")
+        break
+    data, addr = client.recvfrom(1024)
+    data = data.decode()
+    print(f"Server: {data}")
+    # pf.displayGraph()

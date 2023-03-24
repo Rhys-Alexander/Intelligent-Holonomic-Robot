@@ -69,7 +69,24 @@ class PathFinder:
         self.setItems(pucks, bot, cherryBot, enemyBots, cherries)
         self.makeBotGraph()
         self.makeCherryGraph()
-        self.setPaths()
+        self.bot_path = self.getBotPath()
+        self.cherry_path = self.getCherryPath()
+        botCmd = self.getXYRotVel(self.bot, self.bot_path)
+        # cherryCmd = self.getXYRotVel(self.cherry_bot, self.cherry_path)
+        return botCmd
+
+    def getXYRotVel(self, bot, point):
+        MAX_VEL = 100
+        if point is None:
+            return "0,0,0\n"
+        x, y, rot = bot
+        x2, y2 = point
+        dx, dy = x2 - x, y2 - y
+        theta = math.atan2(dy, dx) - rot
+        xVel = MAX_VEL * math.sin(theta)
+        yVel = MAX_VEL * math.cos(theta)
+        rotVel = MAX_VEL * theta / math.pi
+        return ",".join(str(x) for x in [xVel, yVel, rotVel]) + "\n"
 
     def setItems(self, pucks, bot, cherryBot, enemyBots, cherries):
         self.pucks = pucks
@@ -219,10 +236,6 @@ class PathFinder:
             return self.cherry_items[next]
         except ValueError:
             print("No cherry path found")
-
-    def setPaths(self):
-        self.bot_path = self.getBotPath()
-        self.cherry_path = self.getCherryPath()
 
 
 # FIXME not efficient and simple enough for the secondary robot
