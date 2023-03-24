@@ -9,7 +9,7 @@ if __name__ == "__main__":
     client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     while True:
-        data = input("Enter a word: ")
+        data = input("Enter a word: ") + "\n"
         data = data.encode()
         client.sendto(data, addr)
         if data == "!EXIT":
