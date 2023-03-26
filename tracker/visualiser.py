@@ -1,4 +1,5 @@
 import math
+
 import cv2
 import numpy as np
 
@@ -38,7 +39,11 @@ class Board:
         )
 
     def drawBot(self, bot, colour, radius):
-        x, y, rot = bot
+        if len(bot) == 3:
+            x, y, rot = bot
+        else:
+            x, y = bot
+            rot = None
         cv2.circle(
             self.board,
             center=(x, y),
@@ -46,16 +51,17 @@ class Board:
             color=colour,
             thickness=BOT_THICKNESS,
         )
-        cv2.line(
-            self.board,
-            pt1=(x, y),
-            pt2=(
-                math.ceil(x + radius * np.cos(rot)),
-                math.ceil(y + radius * np.sin(rot)),
-            ),
-            color=colour,
-            thickness=BOT_THICKNESS,
-        )
+        if rot:
+            cv2.line(
+                self.board,
+                pt1=(x, y),
+                pt2=(
+                    math.ceil(x + radius * np.cos(rot)),
+                    math.ceil(y + radius * np.sin(rot)),
+                ),
+                color=colour,
+                thickness=BOT_THICKNESS,
+            )
 
     def drawGraph(self, graph, nodes, bot):
         for i, x in enumerate(graph):
@@ -79,15 +85,16 @@ class Board:
 
     def update(
         self,
-        bot=False,
-        enemies=False,
-        pucks=False,
-        path=False,
-        graph=False,
-        nodes=False,
-        img=False,
+        bot,
+        enemies,
+        pucks,
+        path,
+        graph,
+        nodes,
+        img,
+        cmd,
     ):
-        self.board = img if img else self.blank_state.copy()
+        self.board = img
         if pucks:
             for puck in pucks:
                 self.drawPuck(puck)
@@ -96,8 +103,17 @@ class Board:
                 self.drawBot(enemy, RED, BOT_RADIUS)
         if bot:
             self.drawBot(bot, GREEN, BOT_RADIUS)
-            if graph and nodes:
-                self.drawGraph(graph, nodes, bot)
+            self.drawGraph(graph, nodes, bot)
             if path:
                 self.drawPath(path, bot)
+        if cmd:
+            cv2.putText(
+                self.board,
+                cmd.strip(),
+                (10, 90),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                3,
+                RED,
+                5,
+            )
         return self.board
