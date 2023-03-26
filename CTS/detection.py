@@ -4,21 +4,20 @@ from shapely.geometry import LineString
 import shapely
 
 DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
-WIDTH, HEIGHT = 2000, 3000
-CODE_X_OFFSET, CODE_Y_OFFSET = 570, 575
+WIDTH, HEIGHT = 2000, 2000
+CODE_X_OFFSET, CODE_Y_OFFSET = 500, 500
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
-BOT_HEIGHT = 430
-PUCK_HEIGHT = 20
+BOT_HEIGHT = 90
+PUCK_HEIGHT = 10
 
 # TODO ignore pucks if inside robot, check if prob  first
-# TODO figure out which bot is which
 
 
 class Detector:
     def __init__(self, blueTeam, img):
         self.blueTeam = blueTeam
-        self.CAM_POS = (900, -200, 1500) if blueTeam else (1100, -200, 1500)
+        self.CAM_POS = (1000, -300, 1700)
         while True:
             try:
                 self.matrix = self.getMatrix(img)
@@ -44,6 +43,9 @@ class Detector:
             cX = int((tl[0] + br[0]) / 2.0)
             cY = int((tl[1] + br[1]) / 2.0)
             grid[markerID[0] % 20] = (cX, cY)
+        # temp
+        grid = grid[0], grid[3], grid[1], grid[2]
+        print(grid)
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [

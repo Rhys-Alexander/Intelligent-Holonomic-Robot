@@ -24,7 +24,7 @@ with serial.Serial("/dev/ttyUSB0", 115200, timeout=1) as arduino:
                     answer = arduino.readline()
                     print("arduino:", answer.decode())
                     time.sleep(0.01)
-                data = "finsihed"
+                data = "finished"
                 data = data.encode()
                 server.sendto(data, addr)
                 arduino.flushInput()  # remove data after reading
