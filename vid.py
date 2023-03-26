@@ -9,6 +9,8 @@ while True:
     ret, frame = cap.read()
     # frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     # detect ArUco markers in the input frame
+    if ret is False:
+        continue
     corners, ids, rejected = detector.detectMarkers(frame)
     if len(corners) > 0:
         # flatten the ArUco IDs list
