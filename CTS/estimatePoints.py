@@ -15,7 +15,7 @@ LEGEND = ["Icing", "Cream", "Sponge Cake"]
 
 # TODO get number of cakes that are in plate and account for a maximum of 3 cakes
 # TODO on each of those cakes check if there is red on the cake to get cherries
-# TODO connect to basket aruindo to get the number of cherries in the basket
+# TODO connect to basket arduino to get the number of cherries in the basket
 
 
 def getPoints(cakes, cherries, basketCherries):
