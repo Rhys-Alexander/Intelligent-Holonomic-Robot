@@ -14,12 +14,15 @@ PUCK_HEIGHT = 10
 
 class Detector:
     def __init__(self, img):
+        self.bot = None
+        self.pucks = None
+        self.enemies = None
         self.CAM_POS = (1000, -300, 1700)
         while True:
             try:
                 self.matrix = self.getMatrix(img)
                 break
-            except cv2.error:
+            except:
                 print("no aruco grid found")
                 pass
 
@@ -33,6 +36,8 @@ class Detector:
     def getMatrix(self, frame):
         grid = [0] * 4
         corners, ids, _ = DETECTOR.detectMarkers(frame)
+        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+        cv2.imwrite("aruco.png", frame)
         for (corner, id) in zip(corners, ids):
             if not id in range(20, 24):
                 continue
@@ -40,6 +45,7 @@ class Detector:
             cX = int((tl[0] + br[0]) / 2.0)
             cY = int((tl[1] + br[1]) / 2.0)
             grid[id[0] % 20] = (cX, cY)
+        grid = [grid[0], grid[3], grid[1], grid[2]]
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [
@@ -52,25 +58,31 @@ class Detector:
         return cv2.getPerspectiveTransform(pts1, pts2)
 
     def setBots(self):
-        bots = [] * 10
-        rots = [] * 10
+        enemies = []
         corners, ids, _ = DETECTOR.detectMarkers(self.frame)
         for (corner, id) in zip(corners, ids):
             if not id in range(1, 11):
                 continue
             tl, _, br, bl = corner.reshape((4, 2))
             cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
-            rots[id - 1](np.arctan2(bl[1] - br[1], bl[0] - br[0]))
-            bots[id - 1]((cX, cY))
-        if bots:
-            bots = cv2.perspectiveTransform(np.float32([bots]), self.matrix)[0]
+            if id == 1:
+                rot = np.arctan2(bl[1] - br[1], bl[0] - br[0])
+                bot = (cX, cY, rot)
+            else:
+                enemies.append((cX, cY, rot))
+        if bot:
+            rot = bot[2]
+            bot = cv2.perspectiveTransform(np.float32([[bot[:2]]]), self.matrix)[0]
+            x, y = self.camera_compensation(int(bot[0][0]), int(bot[0][1]), BOT_HEIGHT)
+            self.bot = (x, y, rot)
+        if enemies:
+            enemies = cv2.perspectiveTransform(np.float32([enemies]), self.matrix)[0]
             self.enemies = []
-            for i, (bot, rot) in enumerate(zip(bots, rots)):
-                x, y = self.camera_compensation(int(bot[0]), int(bot[1]), BOT_HEIGHT)
-                if i == 1:
-                    self.bot = (x, y, rot)
-                else:
-                    self.enemies.append((x, y, rot))
+            for enemy in enemies:
+                x, y = self.camera_compensation(
+                    int(enemy[0]), int(enemy[1]), BOT_HEIGHT
+                )
+                self.enemies.append((x, y))
 
     def setPucks(self):
         pucks = []
