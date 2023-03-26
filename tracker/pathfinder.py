@@ -1,8 +1,7 @@
 import math
-import visualiser as vis
 
 import numpy as np
-from shapely.geometry import Point, LineString, Polygon
+from shapely.geometry import Point, LineString
 
 # Integer Radiuses
 PUCK_RADIUS = 60
@@ -18,7 +17,7 @@ class PathFinder:
         self.setItems(pucks, bot, enemies)
         self.makeGraph()
         self.path = self.getPuck()
-        return self.getXYRotVel(self.path), self.graph, self.items
+        return self.getXYRotVel(self.path), self.path, self.graph, self.items
 
     def getXYRotVel(self, point):
         MAX_VEL = 100
@@ -31,11 +30,11 @@ class PathFinder:
             print("Puck found")
             return "0,0,0\n"
         theta = math.atan2(dy, dx) - rot
-        xVel = MAX_VEL * math.sin(theta)
-        yVel = MAX_VEL * math.cos(theta)
+        xVel = int(MAX_VEL * math.sin(theta))
+        yVel = int(MAX_VEL * math.cos(theta))
         # FIXME
         # rotVel = min(MAX_VEL * theta / math.pi, 50)
-        rotVel = 50 * theta / math.pi
+        rotVel = int(50 * theta / math.pi)
         return ",".join(str(x) for x in [xVel, yVel, rotVel]) + "\n"
 
     def setItems(self, pucks, bot, enemies):
@@ -44,24 +43,27 @@ class PathFinder:
         self.enemies = enemies
         self.items = self.pucks + [self.bot[:2]]
 
-    def checkCollisions(self, line_ends, enemies):
+    def checkCollisions(self, line_ends):
         margin = BOT_RADIUS * 2
         line = LineString(line_ends)
-        for bot in enemies:
-            obstacle = Point(*bot)
-            if line.distance(obstacle) <= margin:
-                return True
+        if self.enemies:
+            for bot in self.enemies:
+                obstacle = Point(*bot)
+                if line.distance(obstacle) <= margin:
+                    return True
 
     def makeGraph(self):
         graph = np.zeros((len(self.items) - 1))
         for i, item in enumerate(self.items[:-1]):
             # Put in graph if no collisions with weight of distance plus inverse square of distance to enemy bot
-            if not self.checkCollisions([item, self.bot[:2]], BOT_RADIUS, self.enemies):
+            if not self.checkCollisions([item, self.bot[:2]]):
                 weight = math.dist(item, self.bot[:2])
-                for bot in self.enemies:
-                    weight += ENEMY_WEIGHT / (
-                        (LineString([item, self.bot[:2]]).distance(Point(bot))) ** 2 + 1
-                    )
+                if self.enemies:
+                    for bot in self.enemies:
+                        weight += ENEMY_WEIGHT / (
+                            (LineString([item, self.bot[:2]]).distance(Point(bot))) ** 2
+                            + 1
+                        )
                 graph[i] = weight
         self.graph = graph
 
