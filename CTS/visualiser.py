@@ -2,8 +2,6 @@ import math
 import cv2
 import numpy as np
 
-# import matplotlib.pyplot as plt
-
 # y,x
 BOARD_DIMENSIONS = (2000, 2000)
 
@@ -11,10 +9,7 @@ BOARD_DIMENSIONS = (2000, 2000)
 RED = (0, 0, 255)
 GREEN = (18, 170, 0)
 BLUE = (230, 92, 0)
-PINK = (195, 0, 195)
 YELLOW = (0, 191, 255)
-BROWN = (23, 15, 46)
-GRAY = (153, 184, 173)
 
 # Thicknesses
 BOARD_THICKNESS = 10
@@ -29,16 +24,8 @@ BOT_RADIUS = 200
 
 
 class Board:
-    def __init__(
-        self,
-        img=False,
-    ):
-        self.board = (
-            255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
-            if img is False
-            else img
-        )
-        self.blank_state = self.board.copy()
+    def __init__(self):
+        self.blank_state = 255 * np.ones(shape=[*BOARD_DIMENSIONS, 3], dtype=np.uint8)
 
     def drawPuck(self, pt):
         x, y = pt
@@ -46,7 +33,7 @@ class Board:
             self.board,
             center=(x, y),
             radius=PUCK_RADIUS,
-            color=RED,
+            color=YELLOW,
             thickness=ITEM_THICKNESS,
         )
 
@@ -70,19 +57,6 @@ class Board:
             thickness=BOT_THICKNESS,
         )
 
-    def drawItems(
-        self,
-        bot,
-        enemy_bots,
-        pucks=False,
-    ):
-        self.board = self.blank_state.copy()
-        for puck in pucks:
-            self.drawPuck(puck)
-        self.drawBot(bot, RED, BOT_RADIUS)
-        for bot in enemy_bots:
-            self.drawBot(bot, GRAY, BOT_RADIUS)
-
     def drawGraph(self, graph, nodes, bot):
         for i, x in enumerate(graph):
             if x:
@@ -90,7 +64,7 @@ class Board:
                     self.board,
                     pt1=nodes[i],
                     pt2=bot[:2],
-                    color=RED,
+                    color=BLUE,
                     thickness=GRAPH_THICKNESS,
                 )
 
@@ -103,5 +77,27 @@ class Board:
             thickness=PATH_THICKNESS,
         )
 
-    def display(self):
-        cv2.imshow("Board", self.board)
+    def update(
+        self,
+        bot=False,
+        enemies=False,
+        pucks=False,
+        path=False,
+        graph=False,
+        nodes=False,
+        img=False,
+    ):
+        self.board = img if img else self.blank_state.copy()
+        if pucks:
+            for puck in pucks:
+                self.drawPuck(puck)
+        if enemies:
+            for enemy in enemies:
+                self.drawBot(enemy, RED, BOT_RADIUS)
+        if bot:
+            self.drawBot(bot, GREEN, BOT_RADIUS)
+            if graph and nodes:
+                self.drawGraph(graph, nodes, bot)
+            if path:
+                self.drawPath(path, bot)
+        return self.board
