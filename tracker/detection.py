@@ -63,10 +63,10 @@ class Detector:
         for (corner, id) in zip(corners, ids):
             if not id in range(1, 11):
                 continue
-            tl, _, br, bl = corner.reshape((4, 2))
+            tl, tr, br, bl = corner.reshape((4, 2))
             cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
             if id == 1:
-                rot = np.arctan2(bl[1] - br[1], bl[0] - br[0])
+                rot = np.arctan2(br[1] - bl[1], br[0] - bl[0])
                 bot = (cX, cY, rot)
             else:
                 enemies.append((cX, cY, rot))
