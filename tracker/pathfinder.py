@@ -35,7 +35,8 @@ class PathFinder:
         theta = math.atan2(dy, dx) - rot
         xVel = int(MAX_VEL * math.sin(theta))
         yVel = int(MAX_VEL * math.cos(theta))
-        rotVel = min(int(MAX_VEL * theta / math.pi), 50)
+        rot = int(MAX_VEL * theta / math.pi)
+        rotVel = rot if abs(rot) < 50 else 50 * (rot / abs(rot))
         return ",".join(str(x) for x in [xVel, yVel, rotVel]) + "\n"
 
     def setItems(self, pucks, bot, enemies):
