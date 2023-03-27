@@ -14,6 +14,9 @@ class PathFinder:
         pass
 
     def update(self, pucks, bot, enemies):
+        if bot is None:
+            print("Bot not found")
+            return "0,0,0\n", None, None, None
         self.setItems(pucks, bot, enemies)
         self.makeGraph()
         self.path = self.getPuck()
@@ -32,9 +35,7 @@ class PathFinder:
         theta = math.atan2(dy, dx) - rot
         xVel = int(MAX_VEL * math.sin(theta))
         yVel = int(MAX_VEL * math.cos(theta))
-        # FIXME
-        # rotVel = min(MAX_VEL * theta / math.pi, 50)
-        rotVel = int(50 * theta / math.pi)
+        rotVel = min(int(MAX_VEL * theta / math.pi), 50)
         return ",".join(str(x) for x in [xVel, yVel, rotVel]) + "\n"
 
     def setItems(self, pucks, bot, enemies):
