@@ -62,6 +62,15 @@ class Board:
                 color=colour,
                 thickness=BOT_THICKNESS,
             )
+            cv2.putText(
+                self.board,
+                str(round(math.degrees(rot), 2)),
+                (x, y),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                RED,
+                8,
+            )
 
     def drawGraph(self, graph, nodes, bot):
         for i, x in enumerate(graph):
@@ -102,7 +111,7 @@ class Board:
             for enemy in enemies:
                 self.drawBot(enemy, RED, BOT_RADIUS)
         if bot:
-            self.drawBot(bot, GREEN, BOT_RADIUS)
+            self.drawBot(bot, BLUE, BOT_RADIUS)
             self.drawGraph(graph, nodes, bot)
             if path:
                 self.drawPath(path, bot)
@@ -114,6 +123,6 @@ class Board:
                 cv2.FONT_HERSHEY_SIMPLEX,
                 3,
                 RED,
-                5,
+                10,
             )
         return self.board
