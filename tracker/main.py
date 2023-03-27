@@ -16,12 +16,10 @@ cap = cv2.VideoCapture(0)
 while True:
     ret, frame = cap.read()
     if ret:
-        break
+        dtr = dt.Detector(frame, size=2000, height=90, goal_height=10)
+        if dtr.matrix is not None:
+            break
 
-# for testing
-frame = cv2.imread("tracker/input_pics/kitchen.jpeg")
-
-dtr = dt.Detector(frame, size=2000, height=90, goal_height=10)
 pf = pathfinder.PathFinder()
 vis = visualiser.View()
 
@@ -29,10 +27,6 @@ while True:
     ret, frame = cap.read()
     if not ret:
         continue
-
-    # for testing
-    frame = cv2.imread("tracker/input_pics/kitchen.jpeg")
-
     bot, pucks, enemies, warped = dtr.getItems(frame)
     cmd, path, graph, nodes = pf.update(pucks, bot, enemies)
     data = cmd.encode()
