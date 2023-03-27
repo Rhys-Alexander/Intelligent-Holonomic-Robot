@@ -2,13 +2,14 @@ import serial
 import time
 import socket
 
-host = "10.42.0.1"
-port = 5005
+# Run on Boot
+# Change this to your raspeberry pi's IP address
+HOST = "10.42.0.1"
+PORT = 5005
 
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-server.bind((host, port))
+server.bind((HOST, PORT))
 
-print("Running. Press CTRL-C to exit.")
 with serial.Serial("/dev/ttyUSB0", 500000, timeout=1) as arduino:
     time.sleep(0.1)  # wait for serial to open
     if arduino.isOpen():

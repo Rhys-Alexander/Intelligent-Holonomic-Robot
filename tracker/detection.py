@@ -43,7 +43,6 @@ class Detector:
             cX = int((tl[0] + br[0]) / 2.0)
             cY = int((tl[1] + br[1]) / 2.0)
             grid[id[0] % 20] = (cX, cY)
-        # grid = [grid[0], grid[3], grid[1], grid[2]]
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [
@@ -87,7 +86,7 @@ class Detector:
                 )
                 self.obstacles.append((x, y))
 
-    # TODO speed
+    # TODO integrate with setBots
     def setGoals(self):
         goals = []
         corners, ids, _ = DETECTOR.detectMarkers(self.warped_frame)

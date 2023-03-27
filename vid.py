@@ -43,9 +43,9 @@ while True:
                 str(markerID),
                 (topLeft[0], topLeft[1] - 15),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
+                10,
                 (0, 255, 0),
-                2,
+                10,
             )
     # show the output frame
     cv2.imshow("Frame", frame)
