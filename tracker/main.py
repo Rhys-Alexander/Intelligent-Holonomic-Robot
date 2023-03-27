@@ -1,9 +1,10 @@
-import sys
-import pathfinder
-import visualiser as vis
-import detection as dt
-import cv2
 import socket
+
+import pathfinder
+import visualiser
+import detection as dt
+
+import cv2
 
 BOT_RADIUS = 200
 HOST = "10.42.0.1"
@@ -16,21 +17,27 @@ while True:
     ret, frame = cap.read()
     if ret:
         break
-dtr = dt.Detector(frame)
+
+# for testing
+frame = cv2.imread("tracker/input_pics/kitchen.jpeg")
+
+dtr = dt.Detector(frame, size=2000, height=90, goal_height=10)
 pf = pathfinder.PathFinder()
-board = vis.Board()
+vis = visualiser.View()
 
 while True:
     ret, frame = cap.read()
     if not ret:
         continue
+
+    # for testing
+    frame = cv2.imread("tracker/input_pics/kitchen.jpeg")
+
     bot, pucks, enemies, warped = dtr.getItems(frame)
-    path, graph, nodes = pf.update(pucks, bot, enemies)
-    data = path.encode()
+    cmd, path, graph, nodes = pf.update(pucks, bot, enemies)
+    data = cmd.encode()
     client.sendto(data, ADDR)
-    print(data.strip())
-    print(pucks)
-    img = board.update(bot, enemies, pucks, path, graph, nodes, warped)
+    img = vis.update(bot, enemies, pucks, path, graph, nodes, warped, cmd)
     cv2.imshow("warped", img)
     if cv2.waitKey(1) == ord("q"):
         break
