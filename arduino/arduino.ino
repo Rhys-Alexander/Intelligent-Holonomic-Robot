@@ -1,3 +1,8 @@
+// NOTICE
+// To be clear,
+// this is my colleage's arduino code.
+// Please don't judge me one this code.
+
 double ki = 1.65;
 double kp = 4.7;
 
