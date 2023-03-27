@@ -1,22 +1,22 @@
 import cv2
 import numpy as np
 from shapely.geometry import LineString
-import shapely
+from shapely import centroid
 
 DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
-WIDTH, HEIGHT = 2000, 2000
-CODE_OFFSET = 500
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
-BOT_HEIGHT = 90
-PUCK_HEIGHT = 10
 
 
 class Detector:
-    def __init__(self, img):
+    def __init__(self, img, size, height, goal_height):
+        self.GOAL_HEIGHT = goal_height
+        self.HEIGHT = height
+        self.SIZE = size
+        self.OFFSET = size // 2 - 500
         self.bot = None
-        self.pucks = None
-        self.enemies = None
+        self.goals = None
+        self.obstacles = None
         self.CAM_POS = (1000, -300, 1700)
         while True:
             try:
@@ -49,57 +49,62 @@ class Detector:
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [
-                [CODE_OFFSET, CODE_OFFSET],
-                [WIDTH - CODE_OFFSET, CODE_OFFSET],
-                [CODE_OFFSET, HEIGHT - CODE_OFFSET],
-                [WIDTH - CODE_OFFSET, HEIGHT - CODE_OFFSET],
+                [self.OFFSET, self.OFFSET],
+                [self.SIZE - self.OFFSET, self.OFFSET],
+                [self.OFFSET, self.SIZE - self.OFFSET],
+                [self.SIZE - self.OFFSET, self.SIZE - self.OFFSET],
             ]
         )
         return cv2.getPerspectiveTransform(pts1, pts2)
 
     def setBots(self):
-        enemies = []
+        bot = None
+        obstacles = []
         corners, ids, _ = DETECTOR.detectMarkers(self.frame)
         for (corner, id) in zip(corners, ids):
             if not id in range(1, 11):
                 continue
-            tl, tr, br, bl = corner.reshape((4, 2))
+            tl, _, br, bl = corner.reshape((4, 2))
             cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
             if id == 1:
                 rot = np.arctan2(br[1] - bl[1], br[0] - bl[0])
                 bot = (cX, cY, rot)
             else:
-                enemies.append((cX, cY, rot))
+                obstacles.append((cX, cY, rot))
         if bot:
             rot = bot[2]
             bot = cv2.perspectiveTransform(np.float32([[bot[:2]]]), self.matrix)[0]
-            x, y = self.camera_compensation(int(bot[0][0]), int(bot[0][1]), BOT_HEIGHT)
+            x, y = self.camera_compensation(int(bot[0][0]), int(bot[0][1]), self.HEIGHT)
             self.bot = (x, y, rot)
-        if enemies:
-            enemies = cv2.perspectiveTransform(np.float32([enemies]), self.matrix)[0]
-            self.enemies = []
-            for enemy in enemies:
+        if obstacles:
+            obstacles = cv2.perspectiveTransform(np.float32([obstacles]), self.matrix)[
+                0
+            ]
+            self.obstacles = []
+            for obstacle in obstacles:
                 x, y = self.camera_compensation(
-                    int(enemy[0]), int(enemy[1]), BOT_HEIGHT
+                    int(obstacle[0]), int(obstacle[1]), self.HEIGHT
                 )
-                self.enemies.append((x, y))
+                self.obstacles.append((x, y))
 
-    def setPucks(self):
-        pucks = []
+    def setGoals(self):
+        goals = []
         corners, ids, _ = DETECTOR.detectMarkers(self.warped_frame)
         for corner, id in zip(corners, ids):
             if not id in [47, 13, 36]:
                 continue
             tl, _, br, bl = corner.reshape((4, 2))
             cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
-            c = shapely.centroid(LineString([br, bl]))
+            c = centroid(LineString([br, bl]))
             x, y = int(cX + 2 * (cX - c.x)), int(cY + 2 * (cY - c.y))
-            pucks.append(self.camera_compensation(x, y, PUCK_HEIGHT * 2))
-        self.pucks = pucks
+            goals.append(self.camera_compensation(x, y, self.GOAL_HEIGHT * 2))
+        self.goals = goals
 
     def getItems(self, frame):
         self.frame = frame
-        self.warped_frame = cv2.warpPerspective(frame, self.matrix, (WIDTH, HEIGHT))
+        self.warped_frame = cv2.warpPerspective(
+            frame, self.matrix, (self.SIZE, self.SIZE)
+        )
         self.setBots()
-        self.setPucks()
-        return self.bot, self.pucks, self.enemies, self.warped_frame
+        self.setGoals()
+        return self.bot, self.goals, self.obstacles, self.warped_frame
