@@ -23,20 +23,24 @@ class PathFinder:
         return self.getXYRotVel(self.path), self.path, self.graph, self.items
 
     def getXYRotVel(self, point):
-        MAX_VEL = 100
+        vel = 100
+        saturated_dist = 400
         if point is None:
             return "0,0,0\n"
         x, y, rot = self.bot
         x2, y2 = point
         dx, dy = x2 - x, y2 - y
-        if math.dist((x, y), point) < (BOT_RADIUS):
+        d = math.dist((x, y), point)
+        if d < (BOT_RADIUS):
             print("Puck found")
             return "0,0,0\n"
+        if d < saturated_dist:
+            vel = (d // saturated_dist) * vel
+            vel = vel if abs(vel) > 40 else 40
         theta = math.atan2(dy, dx) - rot
-        xVel = int(MAX_VEL * math.sin(theta))
-        yVel = int(MAX_VEL * math.cos(theta))
-        rot = int(MAX_VEL * theta / math.pi)
-        rotVel = rot if abs(rot) < 50 else 50 * (rot / abs(rot))
+        xVel = int(vel * math.sin(theta))
+        yVel = int(vel * math.cos(theta))
+        rotVel = int(75 * theta / math.pi)
         return ",".join(str(x) for x in [xVel, yVel, rotVel]) + "\n"
 
     def setItems(self, pucks, bot, enemies):
