@@ -36,8 +36,6 @@ class Detector:
     def getMatrix(self, frame):
         grid = [0] * 4
         corners, ids, _ = DETECTOR.detectMarkers(frame)
-        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
-        cv2.imwrite("aruco.png", frame)
         for (corner, id) in zip(corners, ids):
             if not id in range(20, 24):
                 continue
