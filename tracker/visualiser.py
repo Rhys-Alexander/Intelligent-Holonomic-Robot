@@ -15,18 +15,18 @@ BOT_THICKNESS = 20
 GRAPH_THICKNESS = 2
 PATH_THICKNESS = 10
 
-# Integer Radiuses
-PUCK_RADIUS = 60
-BOT_RADIUS = 200
-
 
 class View:
-    def drawPuck(self, pt):
+    def __init__(self, goal_radius, bot_radius) -> None:
+        self.GOAL_RADIUS = goal_radius
+        self.BOT_RADIUS = bot_radius
+
+    def drawGoal(self, pt):
         x, y = pt
         cv2.circle(
             self.view,
             center=(x, y),
-            radius=PUCK_RADIUS,
+            radius=self.GOAL_RADIUS,
             color=YELLOW,
             thickness=ITEM_THICKNESS,
         )
@@ -89,7 +89,7 @@ class View:
         self,
         bot,
         enemies,
-        pucks,
+        goals,
         path,
         graph,
         nodes,
@@ -97,14 +97,14 @@ class View:
         cmd,
     ):
         self.view = img
-        if pucks:
-            for puck in pucks:
-                self.drawPuck(puck)
+        if goals:
+            for goal in goals:
+                self.drawGoal(goal)
         if enemies:
             for enemy in enemies:
-                self.drawBot(enemy, RED, BOT_RADIUS)
+                self.drawBot(enemy, RED, self.BOT_RADIUS)
         if bot:
-            self.drawBot(bot, BLUE, BOT_RADIUS)
+            self.drawBot(bot, BLUE, self.BOT_RADIUS)
             self.drawGraph(graph, nodes, bot)
             if path:
                 self.drawPath(path, bot)

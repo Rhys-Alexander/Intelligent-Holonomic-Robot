@@ -3,15 +3,12 @@ import math
 import numpy as np
 from shapely.geometry import Point, LineString
 
-# Integer Radiuses
-PUCK_RADIUS = 60
-BOT_RADIUS = 155
 ENEMY_WEIGHT = 10**8.5
 
 
 class PathFinder:
-    def __init__(self):
-        pass
+    def __init__(self, bot_radius):
+        self.BOT_RADIUS = bot_radius
 
     def update(self, pucks, bot, enemies):
         if bot is None:
@@ -31,7 +28,7 @@ class PathFinder:
         x2, y2 = point
         dx, dy = x2 - x, y2 - y
         d = math.dist((x, y), point)
-        if d < (BOT_RADIUS):
+        if d < (self.BOT_RADIUS):
             print("Puck found")
             return "0,0,0\n"
         if d < saturated_dist:
@@ -50,7 +47,7 @@ class PathFinder:
         self.items = self.pucks + [self.bot[:2]]
 
     def checkCollisions(self, line_ends):
-        margin = BOT_RADIUS * 2
+        margin = self.BOT_RADIUS * 2
         line = LineString(line_ends)
         if self.enemies:
             for bot in self.enemies:
