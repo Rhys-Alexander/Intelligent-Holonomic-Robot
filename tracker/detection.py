@@ -13,7 +13,7 @@ class Detector:
         self.GOAL_HEIGHT = goal_height
         self.ZHEIGHT = height
         self.WIDTH, self.HEIGHT = width_height
-        self.X_OFFSET, self.Y_OFFSET = offset
+        self.XOFFSET, self.YOFFSET = offset
         self.bot = None
         self.goals = None
         self.obstacles = None
