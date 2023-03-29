@@ -10,13 +10,17 @@ BOT_RADIUS = 200
 HOST = "10.42.0.1"
 PORT = 5005
 ADDR = (HOST, PORT)
+WIDTH_HEIGHT = (2000, 3000)
+X_Y_OFFSET = (570, 575)
 client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 cap = cv2.VideoCapture(0)
 while True:
     ret, frame = cap.read()
     if ret:
-        dtr = dt.Detector(frame, size=2000, height=90, goal_height=10)
+        dtr = dt.Detector(
+            frame, size=WIDTH_HEIGHT, offset=X_Y_OFFSET, height=90, goal_height=10
+        )
         if dtr.matrix is not None:
             break
 

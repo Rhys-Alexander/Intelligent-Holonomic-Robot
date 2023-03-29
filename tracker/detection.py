@@ -6,16 +6,14 @@ from shapely import centroid
 DICTIONAIRY = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_250)
 PARAMS = cv2.aruco.DetectorParameters()
 DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
-WIDTH, HEIGHT = 2000, 3000
-XOFFSET, YOFFSET = 570, 575
 
 
 class Detector:
-    def __init__(self, img, size, height, goal_height):
+    def __init__(self, img, width_height, offset, height, goal_height):
         self.GOAL_HEIGHT = goal_height
-        self.HEIGHT = height
-        # self.SIZE = size
-        # self.OFFSET = size // 2 - 500
+        self.ZHEIGHT = height
+        self.WIDTH, self.HEIGHT = width_height
+        self.X_OFFSET, self.Y_OFFSET = offset
         self.bot = None
         self.goals = None
         self.obstacles = None
@@ -46,10 +44,10 @@ class Detector:
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [
-                [XOFFSET, YOFFSET],
-                [WIDTH - XOFFSET, YOFFSET],
-                [XOFFSET, HEIGHT - YOFFSET],
-                [WIDTH - XOFFSET, HEIGHT - YOFFSET],
+                [self.XOFFSET, self.YOFFSET],
+                [self.WIDTH - self.XOFFSET, self.YOFFSET],
+                [self.XOFFSET, self.HEIGHT - self.YOFFSET],
+                [self.WIDTH - self.XOFFSET, self.HEIGHT - self.YOFFSET],
             ]
         )
         return cv2.getPerspectiveTransform(pts1, pts2)
@@ -73,7 +71,9 @@ class Detector:
         if bot:
             rot = bot[2]
             bot = cv2.perspectiveTransform(np.float32([[bot[:2]]]), self.matrix)[0]
-            x, y = self.camera_compensation(int(bot[0][0]), int(bot[0][1]), self.HEIGHT)
+            x, y = self.camera_compensation(
+                int(bot[0][0]), int(bot[0][1]), self.ZHEIGHT
+            )
             self.bot = (x, y, rot)
         if obstacles:
             obstacles = cv2.perspectiveTransform(np.float32([obstacles]), self.matrix)[
@@ -82,7 +82,7 @@ class Detector:
             self.obstacles = []
             for obstacle in obstacles:
                 x, y = self.camera_compensation(
-                    int(obstacle[0]), int(obstacle[1]), self.HEIGHT
+                    int(obstacle[0]), int(obstacle[1]), self.ZHEIGHT
                 )
                 self.obstacles.append((x, y))
 
@@ -102,7 +102,9 @@ class Detector:
 
     def getItems(self, frame):
         self.frame = frame
-        self.warped_frame = cv2.warpPerspective(frame, self.matrix, (WIDTH, HEIGHT))
+        self.warped_frame = cv2.warpPerspective(
+            frame, self.matrix, (self.WIDTH, self.HEIGHT)
+        )
         self.setBots()
         self.setGoals()
         return self.bot, self.goals, self.obstacles, self.warped_frame
