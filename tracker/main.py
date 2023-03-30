@@ -11,7 +11,7 @@ HOST = "10.42.0.1"
 PORT = 5005
 ADDR = (HOST, PORT)
 WIDTH_HEIGHT = (2000, 3000)
-X_Y_OFFSET = (570, 575)
+OFFSET = (570, 575)
 PUCK_RADIUS = 60
 BOT_RADIUS = 155
 
@@ -20,7 +20,11 @@ while True:
     ret, frame = cap.read()
     if ret:
         dtr = dt.Detector(
-            frame, size=WIDTH_HEIGHT, offset=X_Y_OFFSET, height=90, goal_height=10
+            img=frame,
+            width_height=WIDTH_HEIGHT,
+            offset=OFFSET,
+            z_height=90,
+            goal_height=10,
         )
         if dtr.matrix is not None:
             break
