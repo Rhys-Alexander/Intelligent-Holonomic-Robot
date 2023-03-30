@@ -14,7 +14,6 @@ WIDTH_HEIGHT = (2000, 3000)
 X_Y_OFFSET = (570, 575)
 PUCK_RADIUS = 60
 BOT_RADIUS = 155
-client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 cap = cv2.VideoCapture(0)
 while True:
@@ -28,12 +27,13 @@ while True:
 
 pf = pathfinder.PathFinder(BOT_RADIUS)
 vis = visualiser.View(PUCK_RADIUS, BOT_RADIUS)
+client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 while True:
     ret, frame = cap.read()
     if not ret:
         continue
-    bot, pucks, enemies, warped = dtr.getItems(frame)
+    bot, pucks, enemies, warped = dtr.get_items(frame)
     cmd, path, graph, nodes = pf.update(pucks, bot, enemies)
     data = cmd.encode()
     client.sendto(data, ADDR)

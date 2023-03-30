@@ -18,20 +18,20 @@ PATH_THICKNESS = 10
 
 class View:
     def __init__(self, goal_radius, bot_radius) -> None:
-        self.GOAL_RADIUS = goal_radius
-        self.BOT_RADIUS = bot_radius
+        self.goal_radius = goal_radius
+        self.bot_radius = bot_radius
 
-    def drawGoal(self, pt):
+    def draw_goal(self, pt):
         x, y = pt
         cv2.circle(
             self.view,
             center=(x, y),
-            radius=self.GOAL_RADIUS,
+            radius=self.goal_radius,
             color=YELLOW,
             thickness=ITEM_THICKNESS,
         )
 
-    def drawBot(self, bot, colour, radius):
+    def draw_bot(self, bot, colour, radius):
         if len(bot) == 3:
             x, y, rot = bot
         else:
@@ -65,7 +65,7 @@ class View:
                 8,
             )
 
-    def drawGraph(self, graph, nodes, bot):
+    def draw_graph(self, graph, nodes, bot):
         for i, x in enumerate(graph):
             if x:
                 cv2.line(
@@ -76,7 +76,7 @@ class View:
                     thickness=GRAPH_THICKNESS,
                 )
 
-    def drawPath(self, path, bot):
+    def draw_path(self, path, bot):
         cv2.line(
             self.view,
             pt1=path,
@@ -99,15 +99,15 @@ class View:
         self.view = img
         if goals:
             for goal in goals:
-                self.drawGoal(goal)
+                self.draw_goal(goal)
         if enemies:
             for enemy in enemies:
-                self.drawBot(enemy, RED, self.BOT_RADIUS)
+                self.draw_bot(enemy, RED, self.bot_radius)
         if bot:
-            self.drawBot(bot, BLUE, self.BOT_RADIUS)
-            self.drawGraph(graph, nodes, bot)
+            self.draw_bot(bot, BLUE, self.bot_radius)
+            self.draw_graph(graph, nodes, bot)
             if path:
-                self.drawPath(path, bot)
+                self.draw_path(path, bot)
         if cmd:
             cv2.putText(
                 self.view,

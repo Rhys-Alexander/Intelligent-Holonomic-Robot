@@ -9,29 +9,29 @@ DETECTOR = cv2.aruco.ArucoDetector(DICTIONAIRY, PARAMS)
 
 
 class Detector:
-    def __init__(self, img, width_height, offset, height, goal_height):
-        self.GOAL_HEIGHT = goal_height
-        self.ZHEIGHT = height
-        self.WIDTH, self.HEIGHT = width_height
-        self.XOFFSET, self.YOFFSET = offset
+    def __init__(self, img, width_height, offset, z_height, goal_height):
+        self.goal_height = goal_height
+        self.z_height = z_height
+        self.width, self.height = width_height
+        self.x_offset, self.y_offset = offset
         self.bot = None
         self.goals = None
         self.obstacles = None
         self.matrix = None
-        self.CAM_POS = (1000, -300, 1700)
+        self.camera_position = (1000, -300, 1700)
         try:
-            self.matrix = self.getMatrix(img)
+            self.matrix = self.get_matrix(img)
         except:
             print("no aruco grid found")
 
     def camera_compensation(self, x, y, height):
-        line = LineString((self.CAM_POS[:2], (x, y)))
-        distance = line.length - height / (self.CAM_POS[2] / line.length)
+        line = LineString((self.camera_position[:2], (x, y)))
+        distance = line.length - height / (self.camera_position[2] / line.length)
         actual_pos = line.interpolate(distance)
         x, y = int(actual_pos.x), int(actual_pos.y)
         return x, y
 
-    def getMatrix(self, frame):
+    def get_matrix(self, frame):
         grid = [0] * 4
         corners, ids, _ = DETECTOR.detectMarkers(frame)
         for (corner, id) in zip(corners, ids):
@@ -44,17 +44,17 @@ class Detector:
         pts1 = np.float32(grid)
         pts2 = np.float32(
             [
-                [self.XOFFSET, self.YOFFSET],
-                [self.WIDTH - self.XOFFSET, self.YOFFSET],
-                [self.XOFFSET, self.HEIGHT - self.YOFFSET],
-                [self.WIDTH - self.XOFFSET, self.HEIGHT - self.YOFFSET],
+                [self.x_offset, self.y_offset],
+                [self.width - self.x_offset, self.y_offset],
+                [self.x_offset, self.height - self.y_offset],
+                [self.width - self.x_offset, self.height - self.y_offset],
             ]
         )
         return cv2.getPerspectiveTransform(pts1, pts2)
 
     # TODO have detect markers run once and then use the corners and ids to find the bots and goals
     # TODO speed
-    def setBots(self):
+    def set_bots(self):
         bot = None
         obstacles = []
         corners, ids, _ = DETECTOR.detectMarkers(self.frame)
@@ -72,7 +72,7 @@ class Detector:
             rot = bot[2]
             bot = cv2.perspectiveTransform(np.float32([[bot[:2]]]), self.matrix)[0]
             x, y = self.camera_compensation(
-                int(bot[0][0]), int(bot[0][1]), self.ZHEIGHT
+                int(bot[0][0]), int(bot[0][1]), self.z_height
             )
             self.bot = (x, y, rot)
         if obstacles:
@@ -82,12 +82,12 @@ class Detector:
             self.obstacles = []
             for obstacle in obstacles:
                 x, y = self.camera_compensation(
-                    int(obstacle[0]), int(obstacle[1]), self.ZHEIGHT
+                    int(obstacle[0]), int(obstacle[1]), self.z_height
                 )
                 self.obstacles.append((x, y))
 
-    # TODO integrate with setBots
-    def setGoals(self):
+    # TODO integrate with set_bots
+    def set_goals(self):
         goals = []
         corners, ids, _ = DETECTOR.detectMarkers(self.warped_frame)
         for corner, id in zip(corners, ids):
@@ -97,14 +97,14 @@ class Detector:
             cX, cY = int((tl[0] + br[0]) / 2.0), int((tl[1] + br[1]) / 2.0)
             c = centroid(LineString([br, bl]))
             x, y = int(cX + 2 * (cX - c.x)), int(cY + 2 * (cY - c.y))
-            goals.append(self.camera_compensation(x, y, self.GOAL_HEIGHT * 2))
+            goals.append(self.camera_compensation(x, y, self.goal_height * 2))
         self.goals = goals
 
-    def getItems(self, frame):
+    def get_items(self, frame):
         self.frame = frame
         self.warped_frame = cv2.warpPerspective(
-            frame, self.matrix, (self.WIDTH, self.HEIGHT)
+            frame, self.matrix, (self.width, self.height)
         )
-        self.setBots()
-        self.setGoals()
+        self.set_bots()
+        self.set_goals()
         return self.bot, self.goals, self.obstacles, self.warped_frame
